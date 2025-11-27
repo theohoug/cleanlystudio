@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="CLEANLY Studio - Expériences digitales immersives">
+    <meta name="theme-color" content="#030308">
+    
+    <title>CLEANLY Studio — Void Experience</title>
+    
+    <!-- Preload critical assets -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+</head>
+<body>
+    <!-- ============================================
+         LOADING SCREEN
+         ============================================ -->
+    <div id="loader" class="loader">
+        <div class="loader-content">
+            <!-- Logo animé -->
+            <div class="loader-logo">
+                <span class="logo-symbol">◈</span>
+            </div>
+            
+            <!-- Texte de chargement -->
+            <div class="loader-text">
+                <span class="loader-title">CLEANLY STUDIO</span>
+                <span class="loader-status">INITIALIZING VOID</span>
+            </div>
+            
+            <!-- Barre de progression -->
+            <div class="loader-progress">
+                <div class="progress-track">
+                    <div class="progress-fill" id="loadProgress"></div>
+                </div>
+                <span class="progress-percent" id="loadPercent">0%</span>
+            </div>
+            
+            <!-- Données de chargement -->
+            <div class="loader-data">
+                <div class="data-item">
+                    <span class="data-label">SYSTEM</span>
+                    <span class="data-value" id="loadSystem">BOOTING</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">ASSETS</span>
+                    <span class="data-value" id="loadAssets">0/0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Particules du loader -->
+        <div class="loader-particles" id="loaderParticles"></div>
+    </div>
+
+    <!-- ============================================
+         MAIN EXPERIENCE CONTAINER
+         ============================================ -->
+    <main id="app" class="app">
+        <!-- Canvas Three.js sera injecté ici -->
+        <div id="canvas-container" class="canvas-container"></div>
+        
+        <!-- Container pour les éléments CSS3D -->
+        <div id="css3d-container" class="css3d-container"></div>
+    </main>
+
+    <!-- ============================================
+         UI OVERLAY (par-dessus la 3D)
+         ============================================ -->
+    <div id="ui-overlay" class="ui-overlay">
+        <!-- Navigation -->
+        <nav id="nav" class="nav">
+            <div class="nav-logo">
+                <span class="nav-symbol">◈</span>
+                <span class="nav-text">CLEANLY</span>
+            </div>
+            
+            <div class="nav-zones" id="navZones">
+                <button class="nav-zone active" data-zone="0">
+                    <span class="zone-index">00</span>
+                    <span class="zone-name">ENTRY</span>
+                </button>
+                <button class="nav-zone" data-zone="1">
+                    <span class="zone-index">01</span>
+                    <span class="zone-name">IDENTITY</span>
+                </button>
+                <button class="nav-zone" data-zone="2">
+                    <span class="zone-index">02</span>
+                    <span class="zone-name">ARSENAL</span>
+                </button>
+                <button class="nav-zone" data-zone="3">
+                    <span class="zone-index">03</span>
+                    <span class="zone-name">MISSIONS</span>
+                </button>
+                <button class="nav-zone" data-zone="4">
+                    <span class="zone-index">04</span>
+                    <span class="zone-name">CONNECT</span>
+                </button>
+            </div>
+            
+            <div class="nav-status">
+                <span class="status-dot"></span>
+                <span class="status-text">ONLINE</span>
+            </div>
+        </nav>
+        
+        <!-- HUD Corners -->
+        <div class="hud-corner hud-top-left">
+            <div class="hud-line horizontal"></div>
+            <div class="hud-line vertical"></div>
+            <span class="hud-coord" id="hudCoordX">X: 0.00</span>
+        </div>
+        
+        <div class="hud-corner hud-top-right">
+            <div class="hud-line horizontal"></div>
+            <div class="hud-line vertical"></div>
+            <span class="hud-coord" id="hudCoordY">Y: 0.00</span>
+        </div>
+        
+        <div class="hud-corner hud-bottom-left">
+            <div class="hud-line horizontal"></div>
+            <div class="hud-line vertical"></div>
+            <span class="hud-label">ZONE</span>
+            <span class="hud-value" id="hudZone">00</span>
+        </div>
+        
+        <div class="hud-corner hud-bottom-right">
+            <div class="hud-line horizontal"></div>
+            <div class="hud-line vertical"></div>
+            <span class="hud-label">DEPTH</span>
+            <span class="hud-value" id="hudDepth">0.00</span>
+        </div>
+        
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator" id="scrollIndicator">
+            <div class="scroll-line"></div>
+            <span class="scroll-text">SCROLL TO EXPLORE</span>
+            <div class="scroll-arrow">
+                <span>↓</span>
+            </div>
+        </div>
+        
+        <!-- Zone title (apparaît pendant les transitions) -->
+        <div class="zone-title" id="zoneTitle">
+            <span class="zone-title-index">01</span>
+            <span class="zone-title-name">IDENTITY</span>
+        </div>
+        
+        <!-- Audio toggle -->
+        <button class="audio-toggle" id="audioToggle" aria-label="Toggle audio">
+            <span class="audio-icon">♪</span>
+            <span class="audio-status">OFF</span>
+        </button>
+    </div>
+
+    <!-- ============================================
+         CUSTOM CURSOR
+         ============================================ -->
+    <div id="cursor" class="cursor">
+        <div class="cursor-dot"></div>
+        <div class="cursor-ring"></div>
+        <div class="cursor-text" id="cursorText"></div>
+    </div>
+
+    <!-- ============================================
+         SCRIPTS
+         ============================================ -->
+    
+    <!-- Three.js -->
+    <!-- Three.js - Version qui fonctionne -->
+    <script src="https://unpkg.com/three@0.152.0/build/three.min.js"></script>
+    
+    <!-- Three.js Addons (via importmap) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.152.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.152.0/examples/jsm/"
+        }
+    }
+    </script>
+    
+    <!-- GSAP -->
+    <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script src="https://unpkg.com/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
+    
+    <!-- Main App -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
