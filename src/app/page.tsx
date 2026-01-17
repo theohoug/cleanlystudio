@@ -190,6 +190,13 @@ export default function Home() {
   const formRef = useRef<HTMLFormElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.history.scrollRestoration = "manual";
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   const goToStep = useCallback((stepIndex: number) => {
     if (isTransitioning || stepIndex < 0 || stepIndex >= scrollSteps.length) return;
 
@@ -335,6 +342,9 @@ export default function Home() {
 
   const handleLoadingComplete = useCallback(() => {
     setIsLoading(false);
+    setCurrentStep(0);
+    setScrollProgress(0);
+    window.scrollTo(0, 0);
 
     if (navRef.current) {
       gsap.fromTo(navRef.current,
