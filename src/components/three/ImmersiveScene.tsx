@@ -439,7 +439,7 @@ function CinematicCamera({
     const breathY = Math.cos(time * 0.25) * 0.015;
     const breathZ = Math.sin(time * 0.2) * 0.01;
 
-    const parallax = 0.15;
+    const parallax = 0.25;
     targetPos.current.set(
       pos[0] + mouse.x * parallax + breathX,
       pos[1] + mouse.y * parallax * 0.3 + breathY,

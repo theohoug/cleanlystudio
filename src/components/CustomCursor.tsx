@@ -1,12 +1,23 @@
 /**
  * @component CustomCursor
- * @description Premium custom cursor with magnetic effect - Awwwards level
+ * @description Premium custom cursor with magnetic effect and particle trail - Awwwards level
  * @author Cleanlystudio
  */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { gsap } from "gsap";
+
+interface TrailParticle {
+  id: number;
+  x: number;
+  y: number;
+  opacity: number;
+  scale: number;
+}
+
+const MAX_PARTICLES = 12;
+const PARTICLE_SPAWN_RATE = 3;
 
 export default function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -17,6 +28,10 @@ export default function CustomCursor() {
   const [cursorText, setCursorText] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [hoverType, setHoverType] = useState<"default" | "link" | "button" | "view">("default");
+  const [particles, setParticles] = useState<TrailParticle[]>([]);
+  const particleIdRef = useRef(0);
+  const frameCountRef = useRef(0);
+  const lastPosRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const cursor = cursorRef.current;
@@ -37,6 +52,26 @@ export default function CustomCursor() {
       mouseX = e.clientX;
       mouseY = e.clientY;
       if (!isVisible) setIsVisible(true);
+
+      const dx = mouseX - lastPosRef.current.x;
+      const dy = mouseY - lastPosRef.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 5 && frameCountRef.current % PARTICLE_SPAWN_RATE === 0) {
+        setParticles((prev) => {
+          const newParticle: TrailParticle = {
+            id: particleIdRef.current++,
+            x: mouseX,
+            y: mouseY,
+            opacity: 0.6,
+            scale: 1,
+          };
+          return [...prev.slice(-MAX_PARTICLES + 1), newParticle];
+        });
+      }
+
+      lastPosRef.current = { x: mouseX, y: mouseY };
+      frameCountRef.current++;
     };
 
     const onMouseDown = () => {
@@ -160,12 +195,42 @@ export default function CustomCursor() {
     }
   }, [isClicking, isHovering]);
 
+  useEffect(() => {
+    if (particles.length === 0) return;
+
+    const decayInterval = setInterval(() => {
+      setParticles((prev) =>
+        prev
+          .map((p) => ({
+            ...p,
+            opacity: p.opacity - 0.08,
+            scale: p.scale * 0.92,
+          }))
+          .filter((p) => p.opacity > 0)
+      );
+    }, 30);
+
+    return () => clearInterval(decayInterval);
+  }, [particles.length > 0]);
+
   if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
     return null;
   }
 
   return (
     <>
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="cursor-particle"
+          style={{
+            left: p.x,
+            top: p.y,
+            opacity: p.opacity,
+            transform: `translate(-50%, -50%) scale(${p.scale})`,
+          }}
+        />
+      ))}
       <div
         ref={cursorTrailRef}
         className={`cursor-trail ${isVisible ? "visible" : ""}`}
@@ -185,6 +250,18 @@ export default function CustomCursor() {
       />
 
       <style jsx>{`
+        .cursor-particle {
+          position: fixed;
+          width: 6px;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 9997;
+          will-change: transform, opacity;
+          box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+        }
+
         .cursor-trail {
           position: fixed;
           top: 0;

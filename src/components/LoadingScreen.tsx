@@ -246,18 +246,18 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
   if (!show) return null;
 
-  const loadingTexts = [
-    { threshold: 0, text: "Initialisation" },
-    { threshold: 20, text: "Chargement des assets" },
-    { threshold: 40, text: "Construction du monde" },
-    { threshold: 60, text: "Préparation de l'expérience" },
-    { threshold: 80, text: "Presque prêt" },
-    { threshold: 100, text: "Prêt" },
+  const loadingSteps = [
+    { threshold: 0, text: "Initialisation", icon: "⚡" },
+    { threshold: 25, text: "Chargement des assets", icon: "📦" },
+    { threshold: 50, text: "Construction du monde", icon: "🌍" },
+    { threshold: 75, text: "Préparation de l'expérience", icon: "✨" },
+    { threshold: 100, text: "Prêt", icon: "🚀" },
   ];
 
-  const currentText = loadingTexts.reduce((acc, item) =>
-    progress >= item.threshold ? item.text : acc, loadingTexts[0].text
+  const currentStepIndex = loadingSteps.reduce((acc, item, index) =>
+    progress >= item.threshold ? index : acc, 0
   );
+  const currentText = loadingSteps[currentStepIndex].text;
 
   return (
     <div ref={containerRef} className="loading-screen-premium">
@@ -289,6 +289,19 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
         {/* Tagline */}
         <div className="loading-tagline">
           Crafting Digital Experiences
+        </div>
+
+        {/* Visual step indicators */}
+        <div className="loading-steps">
+          {loadingSteps.map((step, index) => (
+            <div
+              key={index}
+              className={`step-indicator ${index <= currentStepIndex ? 'active' : ''} ${index === currentStepIndex ? 'current' : ''}`}
+            >
+              <div className="step-icon">{step.icon}</div>
+              <div className="step-connector" />
+            </div>
+          ))}
         </div>
 
         {/* Progress section */}
@@ -424,7 +437,69 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
           text-transform: uppercase;
           letter-spacing: 0.4em;
           color: rgba(255,255,255,0.35);
-          margin-bottom: 35px;
+          margin-bottom: 20px;
+        }
+
+        .loading-steps {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0;
+          margin-bottom: 24px;
+        }
+
+        .step-indicator {
+          display: flex;
+          align-items: center;
+        }
+
+        .step-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 50%;
+          opacity: 0.3;
+          transform: scale(0.9);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          filter: grayscale(1);
+        }
+
+        .step-indicator.active .step-icon {
+          opacity: 1;
+          transform: scale(1);
+          filter: grayscale(0);
+          border-color: rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.06);
+        }
+
+        .step-indicator.current .step-icon {
+          animation: stepPulse 1.5s ease-in-out infinite;
+          box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        @keyframes stepPulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+          50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255,255,255,0.4); }
+        }
+
+        .step-connector {
+          width: 24px;
+          height: 2px;
+          background: rgba(255,255,255,0.08);
+          transition: background 0.4s ease;
+        }
+
+        .step-indicator:last-child .step-connector {
+          display: none;
+        }
+
+        .step-indicator.active .step-connector {
+          background: rgba(255,255,255,0.25);
         }
 
         .loading-progress-glass {
@@ -611,7 +686,21 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
           .loading-tagline {
             font-size: 8px;
             letter-spacing: 0.3em;
-            margin-bottom: 25px;
+            margin-bottom: 16px;
+          }
+
+          .loading-steps {
+            margin-bottom: 16px;
+          }
+
+          .step-icon {
+            width: 26px;
+            height: 26px;
+            font-size: 12px;
+          }
+
+          .step-connector {
+            width: 16px;
           }
 
           .loading-progress-glass {

@@ -36,6 +36,11 @@ const MobileOverlay = dynamic(
   { ssr: false }
 );
 
+const KonamiCode = dynamic(
+  () => import("@/components/KonamiCode"),
+  { ssr: false }
+);
+
 import { SERVICES, getActiveService, isGalleryOverview, getCurrentRoom } from "@/components/three/ImmersiveScene";
 
 const scrollSteps = [
@@ -404,6 +409,7 @@ export default function Home() {
       <MobileOverlay />
       <CustomCursor />
       <SoundManager isLoaded={!isLoading} />
+      <KonamiCode />
 
       <ImmersiveScene
         scrollProgress={scrollProgress}
