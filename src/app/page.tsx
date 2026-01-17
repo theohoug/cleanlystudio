@@ -166,6 +166,7 @@ export default function Home() {
 
   const handleOfferTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
   };
 
   const handleOfferTouchMove = (e: React.TouchEvent) => {
@@ -174,15 +175,17 @@ export default function Home() {
 
   const handleOfferTouchEnd = () => {
     const diff = touchStartX.current - touchEndX.current;
-    const threshold = 50;
+    const threshold = 30;
 
     if (Math.abs(diff) > threshold) {
-      if (diff > 0 && currentOfferIndex < offers.length - 1) {
-        setCurrentOfferIndex(prev => prev + 1);
-      } else if (diff < 0 && currentOfferIndex > 0) {
-        setCurrentOfferIndex(prev => prev - 1);
+      if (diff > 0) {
+        setCurrentOfferIndex(prev => Math.min(offers.length - 1, prev + 1));
+      } else {
+        setCurrentOfferIndex(prev => Math.max(0, prev - 1));
       }
     }
+    touchStartX.current = 0;
+    touchEndX.current = 0;
   };
 
   const activeService = useMemo(() => getActiveService(scrollProgress), [scrollProgress]);
@@ -415,7 +418,12 @@ export default function Home() {
       )}
 
       {showOffersContent && (
-        <div className="offers-overlay">
+        <div
+          className="offers-overlay"
+          onTouchStart={handleOfferTouchStart}
+          onTouchMove={handleOfferTouchMove}
+          onTouchEnd={handleOfferTouchEnd}
+        >
           <div className="offers-overlay-content">
             <AnimatedTitle isVisible={showOffersContent} className="offers-title" delay={0}>
               {"Mes Offres"}
