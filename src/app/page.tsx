@@ -177,6 +177,7 @@ export default function Home() {
   const [fadeOpacity, setFadeOpacity] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [canMountCanvas, setCanMountCanvas] = useState(false);
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
   const touchStartY = useRef<number>(0);
   const lastWheelTime = useRef<number>(0);
@@ -194,6 +195,28 @@ export default function Home() {
     if (typeof window !== "undefined") {
       window.history.scrollRestoration = "manual";
       window.scrollTo(0, 0);
+    }
+  }, []);
+
+  // Defer canvas mounting to let SSR content paint first (improves LCP)
+  useEffect(() => {
+    // Use requestIdleCallback if available, otherwise setTimeout
+    const mountCanvas = () => {
+      setCanMountCanvas(true);
+      // Hide SSR preload once canvas is mounting
+      const ssrPreload = document.getElementById("ssr-preload");
+      if (ssrPreload) {
+        ssrPreload.style.opacity = "0";
+        setTimeout(() => {
+          ssrPreload.style.display = "none";
+        }, 300);
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      (window as any).requestIdleCallback(mountCanvas, { timeout: 100 });
+    } else {
+      setTimeout(mountCanvas, 50);
     }
   }, []);
 
@@ -421,10 +444,12 @@ export default function Home() {
       <SoundManager isLoaded={!isLoading} />
       <KonamiCode />
 
-      <ImmersiveScene
-        scrollProgress={scrollProgress}
-        onFadeOpacity={handleFadeOpacity}
-      />
+      {canMountCanvas && (
+        <ImmersiveScene
+          scrollProgress={scrollProgress}
+          onFadeOpacity={handleFadeOpacity}
+        />
+      )}
 
       <div className="fade-overlay" style={{ opacity: fadeOpacity }} />
       <div className="vignette-overlay" />
