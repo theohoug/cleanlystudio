@@ -80,9 +80,12 @@ export const SERVICES = [
   }
 ];
 
-// Preload all models
-Object.values(ROOMS).forEach(path => useGLTF.preload(path));
-SERVICES.forEach(s => useGLTF.preload(s.object.path));
+// DRACO decoder path for compressed models
+const DRACO_PATH = "https://www.gstatic.com/draco/versioned/decoders/1.5.6/";
+
+// Preload all models with DRACO support
+Object.values(ROOMS).forEach(path => useGLTF.preload(path, DRACO_PATH));
+SERVICES.forEach(s => useGLTF.preload(s.object.path, DRACO_PATH));
 
 // ============================================================
 // SCROLL RANGES - FIXED TIMING
@@ -207,7 +210,7 @@ function getCameraForProgress(progress: number): { pos: [number, number, number]
 // ============================================================
 
 function Room({ path, visible }: { path: string; visible: boolean }) {
-  const { scene } = useGLTF(path);
+  const { scene } = useGLTF(path, DRACO_PATH);
 
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
@@ -231,7 +234,7 @@ function ServiceObject({
   config: typeof SERVICES[0];
   isActive: boolean;
 }) {
-  const { scene } = useGLTF(config.object.path);
+  const { scene } = useGLTF(config.object.path, DRACO_PATH);
   const groupRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
