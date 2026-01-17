@@ -9,10 +9,61 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], weight: ["200", "300", "400", "500"] });
 
+const siteUrl = "https://cleanlystudio.fr";
+
 export const metadata: Metadata = {
-  title: "Cleanlystudio | Creative Developer",
-  description: "Crafting Digital Experiences - Portfolio by Théo Houguet",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Cleanlystudio | Creative Developer",
+    template: "%s | Cleanlystudio",
+  },
+  description: "Développeur créatif basé en Normandie. Création de sites web immersifs, applications mobiles et expériences 3D premium.",
+  keywords: ["développeur web", "creative developer", "portfolio", "Three.js", "React", "Next.js", "Normandie", "freelance", "site immersif", "WebGL", "3D"],
+  authors: [{ name: "Théo Houguet", url: siteUrl }],
+  creator: "Cleanlystudio",
+  publisher: "Cleanlystudio",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: siteUrl,
+    siteName: "Cleanlystudio",
+    title: "Cleanlystudio | Creative Developer",
+    description: "Développeur créatif basé en Normandie. Création de sites web immersifs, applications mobiles et expériences 3D premium.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Cleanlystudio - Crafting Digital Experiences",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cleanlystudio | Creative Developer",
+    description: "Développeur créatif basé en Normandie. Sites immersifs, apps mobiles et expériences 3D premium.",
+    images: ["/og-image.png"],
+    creator: "@cleanlystudio",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

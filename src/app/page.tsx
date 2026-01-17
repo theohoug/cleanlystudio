@@ -176,7 +176,7 @@ export default function Home() {
   const touchStartY = useRef<number>(0);
   const lastWheelTime = useRef<number>(0);
 
-  const [formData, setFormData] = useState({ name: "", email: "", projectType: "", budget: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", projectType: "", budget: "", message: "", website: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [idleHint, setIdleHint] = useState<string | null>(null);
@@ -286,14 +286,7 @@ export default function Home() {
 
   const getIdleHintMessage = useCallback(() => {
     const step = scrollSteps[currentStep];
-    if (step.id === "hero") return "Swipez pour commencer";
-    if (step.id === "intro") return "Swipez pour découvrir mes projets";
-    if (step.id === "gallery-title") return null;
-    if (step.id.startsWith("project-")) return "Swipez pour le projet suivant";
-    if (step.id === "about") return "Swipez pour voir mes offres";
-    if (step.id.startsWith("offer-")) return null;
-    if (step.id === "contact-form") return "Swipez pour voir mes réseaux";
-    if (step.id === "contact-socials") return null;
+    if (step.id === "hero") return "Scrollez ou swipez pour naviguer";
     return null;
   }, [currentStep]);
 
@@ -363,6 +356,12 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.website) {
+      setIsSubmitted(true);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -381,7 +380,7 @@ export default function Home() {
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_AUTOREPLY_ID, templateParams, EMAILJS_PUBLIC_KEY);
 
       setIsSubmitted(true);
-      setFormData({ name: "", email: "", projectType: "", budget: "", message: "" });
+      setFormData({ name: "", email: "", projectType: "", budget: "", message: "", website: "" });
     } catch (error) {
       console.error("EmailJS Error:", error);
       alert("Erreur lors de l'envoi. Réessayez ou contactez-nous par email.");
@@ -416,12 +415,12 @@ export default function Home() {
       <div className="noise-overlay" />
       <div className="scroll-progress" style={{ transform: `scaleX(${scrollProgress})`, width: "100%" }} />
 
-      <nav ref={navRef} className="nav" style={{ opacity: 0 }}>
-        <div className="nav-logo" data-cursor="Home">CS</div>
+      <nav ref={navRef} className="nav" style={{ opacity: 0 }} role="navigation" aria-label="Navigation principale">
+        <div className="nav-logo" data-cursor="Home" aria-label="Cleanlystudio - Accueil">CS</div>
         <div className="nav-links">
-          <a href="#services" data-cursor="Work">Work</a>
-          <a href="#about" data-cursor="About">About</a>
-          <a href="#contact" data-cursor="Contact">Contact</a>
+          <a href="#services" data-cursor="Work" aria-label="Voir mes projets">Work</a>
+          <a href="#about" data-cursor="About" aria-label="À propos de moi">About</a>
+          <a href="#contact" data-cursor="Contact" aria-label="Me contacter">Contact</a>
         </div>
       </nav>
 
@@ -440,8 +439,46 @@ export default function Home() {
 
       {showImmersiveIntro && (
         <div className="immersive-intro">
-          <p className="immersive-intro-text">Bienvenue dans une expérience immersive</p>
-          <span className="immersive-intro-sub">Continuez à scroller pour explorer</span>
+          <div className="intro-particles">
+            {[...Array(12)].map((_, i) => (
+              <span key={i} className="intro-particle" style={{ '--i': i } as React.CSSProperties} />
+            ))}
+          </div>
+          <div className="intro-rings">
+            <div className="intro-ring ring-1" />
+            <div className="intro-ring ring-2" />
+            <div className="intro-ring ring-3" />
+          </div>
+          <div className="intro-content">
+            <div className="intro-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <p className="immersive-intro-text">
+              {"Bienvenue dans une".split("").map((char, i) => (
+                <span key={i} className="intro-char" style={{ '--delay': `${i * 0.03}s` } as React.CSSProperties}>
+                  {char === " " ? "\u00A0" : char}
+                </span>
+              ))}
+              <br />
+              {"expérience immersive".split("").map((char, i) => (
+                <span key={i + 20} className="intro-char accent" style={{ '--delay': `${(i + 20) * 0.03}s` } as React.CSSProperties}>
+                  {char === " " ? "\u00A0" : char}
+                </span>
+              ))}
+            </p>
+            <div className="intro-divider">
+              <span className="divider-line" />
+              <span className="divider-dot" />
+              <span className="divider-line" />
+            </div>
+            <span className="immersive-intro-sub">
+              <span className="sub-icon">↓</span>
+              Swipez pour explorer
+            </span>
+          </div>
+          <div className="intro-glow" />
         </div>
       )}
 
@@ -540,7 +577,7 @@ export default function Home() {
                     ))}
                   </ul>
                   <p className="offer-delay">Délai : {offer.delay}</p>
-                  <button className="offer-cta" onClick={() => scrollToContact(offer.id)}>
+                  <button className="offer-cta" onClick={() => scrollToContact(offer.id)} aria-label={`Choisir l'offre ${offer.name}`}>
                     Choisir {offer.name}
                   </button>
                 </div>
@@ -578,6 +615,16 @@ export default function Home() {
               </div>
             ) : (
               <form className="contact-form" ref={formRef} onSubmit={handleSubmit}>
+                <input
+                  type="text"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleFormChange}
+                  autoComplete="off"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, width: 0 }}
+                />
                 <div className="form-row">
                   <div className="form-field">
                     <input
@@ -642,9 +689,9 @@ export default function Home() {
                   />
                   <label className="form-label">Votre message</label>
                 </div>
-                <MagneticButton type="submit" className="form-submit" disabled={isSubmitting}>
+                <MagneticButton type="submit" className="form-submit" disabled={isSubmitting} aria-label={isSubmitting ? "Envoi du message en cours" : "Envoyer le message"}>
                   <span>{isSubmitting ? "Envoi en cours..." : "Envoyer le message"}</span>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </MagneticButton>
@@ -660,20 +707,20 @@ export default function Home() {
             <AnimatedTitle isVisible={showContactSocials} className="socials-title" delay={0}>
               {"Restons en contact"}
             </AnimatedTitle>
-            <a href="mailto:contact@cleanlystudio.fr" className="socials-email" data-cursor="Email">
+            <a href="mailto:contact@cleanlystudio.fr" className="socials-email" data-cursor="Email" aria-label="Envoyer un email à contact@cleanlystudio.fr">
               contact@cleanlystudio.fr
             </a>
             <div className="socials-links">
-              <a href="https://instagram.com/cleanlystudio" target="_blank" rel="noopener noreferrer" className="social-link" data-cursor="Instagram">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <a href="https://instagram.com/cleanlystudio" target="_blank" rel="noopener noreferrer" className="social-link" data-cursor="Instagram" aria-label="Suivre Cleanlystudio sur Instagram (ouvre dans un nouvel onglet)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                   <rect x="2" y="2" width="20" height="20" rx="5" />
                   <circle cx="12" cy="12" r="4" />
                   <circle cx="18" cy="6" r="1.5" fill="currentColor" />
                 </svg>
                 <span>@cleanlystudio</span>
               </a>
-              <a href="https://linkedin.com/in/theo-houguet" target="_blank" rel="noopener noreferrer" className="social-link" data-cursor="LinkedIn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <a href="https://linkedin.com/in/theo-houguet" target="_blank" rel="noopener noreferrer" className="social-link" data-cursor="LinkedIn" aria-label="Voir le profil LinkedIn de Théo Houguet (ouvre dans un nouvel onglet)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                   <rect x="2" y="2" width="20" height="20" rx="3" />
                   <path d="M7 11v6M7 7v.01M11 11v6M11 14c0-1.657 1.343-3 3-3s3 1.343 3 3v3" />
                 </svg>
@@ -708,13 +755,13 @@ export default function Home() {
                 </AnimatedTitle>
               </div>
               <div className="hero-cta" style={{ opacity: isLoading ? 0 : 1, transition: "opacity 0.8s ease 0.3s" }}>
-                <button className="cta-primary" onClick={() => goToStep(2)}>
+                <button className="cta-primary" onClick={() => goToStep(2)} aria-label="Voir mes projets et compétences">
                   <span>Voir mes projets</span>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M7 17L17 7M17 7H7M17 7v10"/>
                   </svg>
                 </button>
-                <button className="cta-secondary" onClick={() => scrollToContact()}>
+                <button className="cta-secondary" onClick={() => scrollToContact()} aria-label="Aller au formulaire de contact">
                   <span>Me contacter</span>
                 </button>
               </div>
@@ -751,16 +798,8 @@ export default function Home() {
         />
       </main>
 
-      <div className={`scroll-hint ${currentStep > 0 ? "hidden" : ""}`}>
-        <div className="scroll-arrow">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12l7 7 7-7"/>
-          </svg>
-        </div>
-        <span className="scroll-hint-text">Explorer</span>
-      </div>
 
-      {idleHint && currentStep > 0 && (
+      {idleHint && currentStep === 0 && (
         <div className={`idle-hint ${idleHint ? "visible" : ""}`}>
           <div className="idle-hint-content">
             <div className="idle-hint-icon">
