@@ -1352,16 +1352,20 @@ main > section {
   .offers-overlay {
     width: calc(100% - 32px);
     top: 50%;
-    touch-action: pan-y pinch-zoom;
+    touch-action: manipulation;
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  .offers-overlay-content {
+    touch-action: manipulation;
   }
 
   .offers-grid {
     display: block;
     position: relative;
-    min-height: 480px;
-    pointer-events: none;
+    min-height: 520px;
+    overflow: hidden;
   }
 
   .offer-card {
@@ -1371,9 +1375,8 @@ main > section {
     right: 0;
     opacity: 0 !important;
     visibility: hidden;
-    pointer-events: none;
-    transform: translateX(30px);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(100%);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1;
   }
 
@@ -1381,14 +1384,14 @@ main > section {
     position: relative;
     opacity: 1 !important;
     visibility: visible;
-    pointer-events: none;
     transform: translateX(0);
     z-index: 10;
   }
 
-  .offer-card.mobile-visible .offer-cta,
-  .offer-card.mobile-visible .offer-includes {
-    pointer-events: auto;
+  .offer-cta {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 20;
   }
 
   .offer-starter.mobile-visible {

@@ -162,31 +162,45 @@ export default function Home() {
   const formRef = useRef<HTMLFormElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const touchStartX = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const isSwiping = useRef<boolean>(false);
 
-  const handleOfferTouchStart = (e: React.TouchEvent) => {
+  const handleOfferTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
-    touchEndX.current = e.touches[0].clientX;
-  };
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+  }, []);
 
-  const handleOfferTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
-  };
+  const handleOfferTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartX.current) return;
 
-  const handleOfferTouchEnd = () => {
-    const diff = touchStartX.current - touchEndX.current;
-    const threshold = 30;
+    const diffX = Math.abs(e.touches[0].clientX - touchStartX.current);
+    const diffY = Math.abs(e.touches[0].clientY - touchStartY.current);
 
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0) {
-        setCurrentOfferIndex(prev => Math.min(offers.length - 1, prev + 1));
-      } else {
-        setCurrentOfferIndex(prev => Math.max(0, prev - 1));
-      }
+    if (diffX > diffY && diffX > 10) {
+      isSwiping.current = true;
+      e.preventDefault();
     }
+  }, []);
+
+  const handleOfferTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!isSwiping.current || !touchStartX.current) {
+      touchStartX.current = 0;
+      return;
+    }
+
+    const endX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - endX;
+
+    if (diff > 40) {
+      setCurrentOfferIndex(prev => Math.min(offers.length - 1, prev + 1));
+    } else if (diff < -40) {
+      setCurrentOfferIndex(prev => Math.max(0, prev - 1));
+    }
+
     touchStartX.current = 0;
-    touchEndX.current = 0;
-  };
+    isSwiping.current = false;
+  }, []);
 
   const activeService = useMemo(() => getActiveService(scrollProgress), [scrollProgress]);
   const currentService = activeService !== null ? SERVICES[activeService] : null;
