@@ -195,6 +195,11 @@ export default function Home() {
     if (typeof window !== "undefined") {
       window.history.scrollRestoration = "manual";
       window.scrollTo(0, 0);
+
+      // Register service worker for PWA
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
     }
   }, []);
 
@@ -773,7 +778,7 @@ export default function Home() {
         </div>
       )}
 
-      <main ref={mainRef}>
+      <main ref={mainRef} id="main-content">
         <section
           ref={(el) => { sectionRefs.current[0] = el; }}
           className="section"

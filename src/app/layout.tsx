@@ -100,6 +100,11 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
       <body className={inter.className}>
+        {/* Skip to main content link for accessibility */}
+        <a href="#main-content" className="skip-link">
+          Aller au contenu principal
+        </a>
+
         {/* SSR Preload - LCP Element (visible immediately, hidden by JS) */}
         <div id="ssr-preload" aria-hidden="true">
           <div className="ssr-preload-content">

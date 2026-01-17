@@ -1,6 +1,6 @@
 /**
  * @component KonamiCode
- * @description Easter egg - Konami code activates special effects
+ * @description Multiple Easter eggs - Konami code, secret words, logo clicks
  * @author Cleanlystudio
  */
 "use client";
@@ -20,6 +20,13 @@ const KONAMI_CODE = [
   "KeyA",
 ];
 
+const SECRET_WORDS: { [key: string]: { message: string; emoji: string } } = {
+  "awwwards": { message: "AWWWARDS MODE ACTIVATED!", emoji: "🏆" },
+  "theo": { message: "HELLO THÉO!", emoji: "👋" },
+  "matrix": { message: "FOLLOW THE WHITE RABBIT", emoji: "🐇" },
+  "creative": { message: "CREATIVITY UNLOCKED!", emoji: "🎨" },
+};
+
 interface Particle {
   id: number;
   x: number;
@@ -36,8 +43,13 @@ export default function KonamiCode() {
   const [activated, setActivated] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [showMessage, setShowMessage] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState({ text: "", emoji: "" });
+  const [matrixMode, setMatrixMode] = useState(false);
   const keysRef = useRef<string[]>([]);
+  const typedCharsRef = useRef<string>("");
   const animationRef = useRef<number | null>(null);
+  const logoClicksRef = useRef<number>(0);
+  const lastClickRef = useRef<number>(0);
 
   const colors = ["#ff6b6b", "#4ecdc4", "#45b7d1", "#96f", "#ffd93d", "#6bcb77", "#ff8fab"];
 
@@ -82,27 +94,72 @@ export default function KonamiCode() {
     });
   }, []);
 
+  const triggerEasterEgg = useCallback((message: string, emoji: string, isMatrix = false) => {
+    setActivated(true);
+    setShowMessage(true);
+    setCurrentMessage({ text: message, emoji });
+    setMatrixMode(isMatrix);
+    createParticles();
+
+    if (typeof (window as any).playSuccessSound === "function") {
+      (window as any).playSuccessSound();
+    }
+
+    requestAnimationFrame(animateParticles);
+  }, [createParticles, animateParticles]);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (activated) return;
 
+      // Konami code detection
       keysRef.current = [...keysRef.current, e.code].slice(-10);
-
       if (keysRef.current.join(",") === KONAMI_CODE.join(",")) {
-        setActivated(true);
-        setShowMessage(true);
         keysRef.current = [];
-        createParticles();
+        typedCharsRef.current = "";
+        triggerEasterEgg("KONAMI CODE ACTIVATED!", "🎮");
+        return;
+      }
 
-        if (typeof (window as any).playSuccessSound === "function") {
-          (window as any).playSuccessSound();
+      // Secret words detection (only letters)
+      if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+        typedCharsRef.current = (typedCharsRef.current + e.key.toLowerCase()).slice(-10);
+
+        for (const [word, config] of Object.entries(SECRET_WORDS)) {
+          if (typedCharsRef.current.endsWith(word)) {
+            typedCharsRef.current = "";
+            keysRef.current = [];
+            triggerEasterEgg(config.message, config.emoji, word === "matrix");
+            return;
+          }
         }
-
-        requestAnimationFrame(animateParticles);
       }
     },
-    [activated, createParticles, animateParticles]
+    [activated, triggerEasterEgg]
   );
+
+  // Logo click easter egg (7 clicks)
+  useEffect(() => {
+    const logo = document.querySelector(".nav-logo");
+    if (!logo) return;
+
+    const handleLogoClick = () => {
+      const now = Date.now();
+      if (now - lastClickRef.current > 2000) {
+        logoClicksRef.current = 0;
+      }
+      lastClickRef.current = now;
+      logoClicksRef.current++;
+
+      if (logoClicksRef.current >= 7 && !activated) {
+        logoClicksRef.current = 0;
+        triggerEasterEgg("DEVELOPER MODE!", "👨‍💻");
+      }
+    };
+
+    logo.addEventListener("click", handleLogoClick);
+    return () => logo.removeEventListener("click", handleLogoClick);
+  }, [activated, triggerEasterEgg]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -120,8 +177,22 @@ export default function KonamiCode() {
     <div className="konami-container">
       {showMessage && (
         <div className="konami-message">
-          <span className="konami-text">🎮 KONAMI CODE ACTIVATED! 🎮</span>
-          <span className="konami-subtext">You found the secret!</span>
+          <span className="konami-text">{currentMessage.emoji} {currentMessage.text} {currentMessage.emoji}</span>
+          <span className="konami-subtext">You found a secret!</span>
+        </div>
+      )}
+
+      {matrixMode && (
+        <div className="matrix-rain">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={i} className="matrix-column" style={{ left: `${i * 5}%`, animationDelay: `${Math.random() * 2}s` }}>
+              {Array.from({ length: 20 }).map((_, j) => (
+                <span key={j} style={{ animationDelay: `${j * 0.1}s` }}>
+                  {String.fromCharCode(0x30A0 + Math.random() * 96)}
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
       )}
 
@@ -210,6 +281,41 @@ export default function KonamiCode() {
           position: absolute;
           border-radius: 2px;
           will-change: transform;
+        }
+
+        .matrix-rain {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          z-index: -1;
+        }
+
+        .matrix-column {
+          position: absolute;
+          top: -100%;
+          display: flex;
+          flex-direction: column;
+          animation: matrixFall 4s linear infinite;
+        }
+
+        .matrix-column span {
+          color: #0f0;
+          font-family: monospace;
+          font-size: 20px;
+          text-shadow: 0 0 10px #0f0;
+          opacity: 0;
+          animation: matrixFade 0.5s ease forwards;
+        }
+
+        @keyframes matrixFall {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(200vh); }
+        }
+
+        @keyframes matrixFade {
+          0% { opacity: 0; }
+          50% { opacity: 1; }
+          100% { opacity: 0.3; }
         }
       `}</style>
     </div>

@@ -206,6 +206,49 @@ function getCameraForProgress(progress: number): { pos: [number, number, number]
 // COMPONENTS
 // ============================================================
 
+// Skeleton placeholder while models load
+function SkeletonRoom() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Floor grid */}
+      <gridHelper args={[10, 20, "#333", "#222"]} position={[0, 0, 0]} />
+
+      {/* Wireframe walls */}
+      <lineSegments position={[0, 1.5, -3]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(8, 3, 0.1)]} />
+        <lineBasicMaterial color="#333" />
+      </lineSegments>
+
+      {/* Corner pillars */}
+      {[[-3, 0, -3], [3, 0, -3], [-3, 0, 3], [3, 0, 3]].map((pos, i) => (
+        <mesh key={i} position={pos as [number, number, number]}>
+          <boxGeometry args={[0.2, 3, 0.2]} />
+          <meshBasicMaterial color="#222" wireframe />
+        </mesh>
+      ))}
+
+      {/* Floating cubes */}
+      {[[-1, 1, 0], [1, 1.5, -1], [0, 0.8, 1]].map((pos, i) => (
+        <mesh key={i} position={pos as [number, number, number]}>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshBasicMaterial color="#444" wireframe transparent opacity={0.5} />
+        </mesh>
+      ))}
+
+      {/* Ambient pulse */}
+      <pointLight position={[0, 2, 0]} intensity={0.5} color="#666" />
+    </group>
+  );
+}
+
 function Room({ path, visible }: { path: string; visible: boolean }) {
   const { scene } = useGLTF(path);
 
@@ -597,7 +640,7 @@ export default function ImmersiveScene({ scrollProgress, onFadeOpacity }: Immers
         dpr={[1, 1.5]}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
-        <Suspense fallback={null}>
+        <Suspense fallback={<SkeletonRoom />}>
           <Scene scrollProgress={scrollProgress} mouse={mouse} />
         </Suspense>
       </Canvas>
