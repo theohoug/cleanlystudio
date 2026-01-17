@@ -4,4 +4,4 @@ Allow: /
 Disallow: /_next/
 Disallow: /api/
 
-Sitemap: https://cleanlystudio.fr/sitemap.xml
+Sitemap: https://cleanlystudio.pro/sitemap.xml

@@ -9,7 +9,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], weight: ["200", "300", "400", "500"] });
 
-const siteUrl = "https://cleanlystudio.fr";
+const siteUrl = "https://cleanlystudio.pro";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

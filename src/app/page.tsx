@@ -723,8 +723,8 @@ export default function Home() {
             <AnimatedTitle isVisible={showContactSocials} className="socials-title" delay={0}>
               {"Restons en contact"}
             </AnimatedTitle>
-            <a href="mailto:contact@cleanlystudio.fr" className="socials-email" data-cursor="Email" aria-label="Envoyer un email à contact@cleanlystudio.fr">
-              contact@cleanlystudio.fr
+            <a href="mailto:contact@cleanlystudio.pro" className="socials-email" data-cursor="Email" aria-label="Envoyer un email à contact@cleanlystudio.pro">
+              contact@cleanlystudio.pro
             </a>
             <div className="socials-links">
               <a href="https://instagram.com/cleanlystudio" target="_blank" rel="noopener noreferrer" className="social-link" data-cursor="Instagram" aria-label="Suivre Cleanlystudio sur Instagram (ouvre dans un nouvel onglet)">
