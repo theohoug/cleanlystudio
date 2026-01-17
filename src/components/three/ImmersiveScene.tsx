@@ -80,8 +80,8 @@ export const SERVICES = [
   }
 ];
 
-// DRACO decoder path for compressed models
-const DRACO_PATH = "https://www.gstatic.com/draco/versioned/decoders/1.5.6/";
+// DRACO decoder path for compressed models (local for faster loading)
+const DRACO_PATH = "/draco/";
 
 // Preload all models with DRACO support
 Object.values(ROOMS).forEach(path => useGLTF.preload(path, DRACO_PATH));
