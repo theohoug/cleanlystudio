@@ -80,12 +80,9 @@ export const SERVICES = [
   }
 ];
 
-// DRACO decoder path for compressed models (local for faster loading)
-const DRACO_PATH = "/draco/";
-
-// Preload all models with DRACO support
-Object.values(ROOMS).forEach(path => useGLTF.preload(path, DRACO_PATH));
-SERVICES.forEach(s => useGLTF.preload(s.object.path, DRACO_PATH));
+// Progressive loading: Only preload hero room immediately for fast startup
+// Other models are loaded lazily as needed
+useGLTF.preload(ROOMS.hero);
 
 // ============================================================
 // SCROLL RANGES - FIXED TIMING
@@ -210,7 +207,7 @@ function getCameraForProgress(progress: number): { pos: [number, number, number]
 // ============================================================
 
 function Room({ path, visible }: { path: string; visible: boolean }) {
-  const { scene } = useGLTF(path, DRACO_PATH);
+  const { scene } = useGLTF(path);
 
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
@@ -234,7 +231,7 @@ function ServiceObject({
   config: typeof SERVICES[0];
   isActive: boolean;
 }) {
-  const { scene } = useGLTF(config.object.path, DRACO_PATH);
+  const { scene } = useGLTF(config.object.path);
   const groupRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
@@ -520,6 +517,19 @@ function Scene({
   const currentRoom = getCurrentRoom(scrollProgress);
   const activeService = getActiveService(scrollProgress);
   const showGallery = currentRoom === "gallery";
+
+  // Lazy load other models after initial render (hero room already loaded)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Preload other rooms in background
+      useGLTF.preload(ROOMS.gallery);
+      useGLTF.preload(ROOMS.about);
+      useGLTF.preload(ROOMS.contact);
+      // Preload gallery objects
+      SERVICES.forEach(s => useGLTF.preload(s.object.path));
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
