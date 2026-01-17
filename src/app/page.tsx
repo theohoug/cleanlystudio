@@ -692,18 +692,18 @@ export default function Home() {
           style={{ minHeight: "80vh" }}
         >
           {showHeroContent && (
-            <div className="section-content hero-content" style={{ opacity: isLoading ? 0 : 1, transition: "opacity 0.5s ease" }}>
-              <AnimatedLabel isVisible={showHeroContent} className="hero-label" delay={isLoading ? 0.5 : 0}>
+            <div className="section-content hero-content" style={{ opacity: isLoading ? 0 : 1, transition: "opacity 0.3s ease" }}>
+              <AnimatedLabel isVisible={showHeroContent && !isLoading} className="hero-label" delay={0.1}>
                 Creative Developer
               </AnimatedLabel>
               <div className="hero-title">
-                <AnimatedTitle isVisible={showHeroContent} className="hero-title-line" delay={isLoading ? 0.7 : 0}>
+                <AnimatedTitle isVisible={showHeroContent && !isLoading} className="hero-title-line" delay={0.2}>
                   {"Crafting"}
                 </AnimatedTitle>
-                <AnimatedTitle isVisible={showHeroContent} className="hero-title-line accent" delay={isLoading ? 0.9 : 0}>
+                <AnimatedTitle isVisible={showHeroContent && !isLoading} className="hero-title-line accent" delay={0.35}>
                   {"Digital"}
                 </AnimatedTitle>
-                <AnimatedTitle isVisible={showHeroContent} className="hero-title-line" delay={isLoading ? 1.1 : 0}>
+                <AnimatedTitle isVisible={showHeroContent && !isLoading} className="hero-title-line" delay={0.5}>
                   {"Experiences"}
                 </AnimatedTitle>
               </div>

@@ -153,29 +153,28 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
     const letters = logoRef.current.querySelectorAll(".letter");
 
-    // 3D loader entrance
+    // 3D loader - visible immediately, subtle fade in
     gsap.fromTo(loader3dRef.current,
-      { scale: 0, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 1.5, ease: "elastic.out(1, 0.5)", delay: 0.2 }
+      { opacity: 0 },
+      { opacity: 1, duration: 0.5, ease: "power2.out" }
     );
 
-    // Glass card entrance
+    // Glass card entrance - faster
     gsap.fromTo(glassCardRef.current,
-      { y: 50, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1, ease: "power3.out", delay: 0.8 }
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out", delay: 0.2 }
     );
 
-    // Letters with wave effect
+    // Letters with wave effect - faster
     gsap.fromTo(letters,
-      { y: 40, opacity: 0, rotateY: -60 },
+      { y: 20, opacity: 0 },
       {
         y: 0,
         opacity: 1,
-        rotateY: 0,
-        duration: 1,
-        stagger: 0.05,
-        ease: "back.out(1.7)",
-        delay: 1
+        duration: 0.6,
+        stagger: 0.03,
+        ease: "power3.out",
+        delay: 0.3
       }
     );
 
@@ -186,7 +185,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
       repeat: -1,
       yoyo: true,
       ease: "sine.inOut",
-      delay: 2
+      delay: 1
     });
 
   }, []);
