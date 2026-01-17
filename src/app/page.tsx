@@ -38,6 +38,23 @@ const MobileOverlay = dynamic(
 
 import { SERVICES, getActiveService, isGalleryOverview, getCurrentRoom } from "@/components/three/ImmersiveScene";
 
+const scrollSteps = [
+  { id: "hero", label: "Accueil", progress: 0 },
+  { id: "intro", label: "Intro", progress: 0.06 },
+  { id: "gallery-title", label: "Projets", progress: 0.15 },
+  { id: "project-1", label: "Web", progress: 0.22 },
+  { id: "project-2", label: "Mobile", progress: 0.30 },
+  { id: "project-3", label: "Gaming", progress: 0.38 },
+  { id: "project-4", label: "Vidéo", progress: 0.46 },
+  { id: "project-5", label: "Design", progress: 0.52 },
+  { id: "about", label: "À propos", progress: 0.60 },
+  { id: "offer-1", label: "Starter", progress: 0.67 },
+  { id: "offer-2", label: "Pro", progress: 0.71 },
+  { id: "offer-3", label: "Premium", progress: 0.75 },
+  { id: "contact-form", label: "Contact", progress: 0.85 },
+  { id: "contact-socials", label: "Réseaux", progress: 0.93 },
+];
+
 const sections = [
   { id: "hero", label: "Home" },
   { id: "services", label: "Work" },
@@ -149,104 +166,169 @@ const EMAILJS_AUTOREPLY_ID = "template_dx1etrz";
 const EMAILJS_PUBLIC_KEY = "DYQWf8ZrPToCuxrQN";
 
 export default function Home() {
+  const [currentStep, setCurrentStep] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [currentSection, setCurrentSection] = useState(0);
   const [fadeOpacity, setFadeOpacity] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
+  const touchStartY = useRef<number>(0);
+  const lastWheelTime = useRef<number>(0);
 
   const [formData, setFormData] = useState({ name: "", email: "", projectType: "", budget: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
+  const [idleHint, setIdleHint] = useState<string | null>(null);
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollRef = useRef<number>(Date.now());
   const formRef = useRef<HTMLFormElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const touchStartX = useRef<number>(0);
-  const touchStartY = useRef<number>(0);
-  const isSwiping = useRef<boolean>(false);
 
-  const handleOfferTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    isSwiping.current = false;
-  }, []);
+  const goToStep = useCallback((stepIndex: number) => {
+    if (isTransitioning || stepIndex < 0 || stepIndex >= scrollSteps.length) return;
 
-  const handleOfferTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartX.current) return;
+    setIsTransitioning(true);
+    setCurrentStep(stepIndex);
+    setScrollProgress(scrollSteps[stepIndex].progress);
 
-    const diffX = Math.abs(e.touches[0].clientX - touchStartX.current);
-    const diffY = Math.abs(e.touches[0].clientY - touchStartY.current);
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 600);
+  }, [isTransitioning]);
 
-    if (diffX > diffY && diffX > 10) {
-      isSwiping.current = true;
-      e.preventDefault();
-    }
-  }, []);
+  const nextStep = useCallback(() => {
+    goToStep(currentStep + 1);
+  }, [currentStep, goToStep]);
 
-  const handleOfferTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!isSwiping.current || !touchStartX.current) {
-      touchStartX.current = 0;
-      return;
-    }
+  const prevStep = useCallback(() => {
+    goToStep(currentStep - 1);
+  }, [currentStep, goToStep]);
 
-    const endX = e.changedTouches[0].clientX;
-    const diff = touchStartX.current - endX;
-
-    if (diff > 40) {
-      setCurrentOfferIndex(prev => Math.min(offers.length - 1, prev + 1));
-    } else if (diff < -40) {
-      setCurrentOfferIndex(prev => Math.max(0, prev - 1));
-    }
-
-    touchStartX.current = 0;
-    isSwiping.current = false;
-  }, []);
+  const mobileOfferIndex = useMemo(() => {
+    const step = scrollSteps[currentStep];
+    if (step.id === "offer-1") return 0;
+    if (step.id === "offer-2") return 1;
+    if (step.id === "offer-3") return 2;
+    return 0;
+  }, [currentStep]);
 
   const activeService = useMemo(() => getActiveService(scrollProgress), [scrollProgress]);
   const currentService = activeService !== null ? SERVICES[activeService] : null;
-  const showGalleryTitle = useMemo(() => isGalleryOverview(scrollProgress), [scrollProgress]);
 
   const mainRef = useRef<HTMLElement>(null);
 
-  const handleScroll = useCallback(() => {
-    const main = mainRef.current;
-    if (!main) return;
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (isTransitioning || isLoading) return;
 
-    const scrollTop = main.scrollTop;
-    const scrollHeight = main.scrollHeight - main.clientHeight;
-    const progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
-    setScrollProgress(progress);
+      const now = Date.now();
+      if (now - lastWheelTime.current < 400) return;
 
-    const windowHeight = main.clientHeight;
-    const scrollCenter = scrollTop + windowHeight / 2;
+      const target = e.target as HTMLElement;
+      if (target.closest("input, textarea, select, .contact-overlay-content")) return;
 
-    sectionRefs.current.forEach((section, index) => {
-      if (section) {
-        const sectionTop = section.offsetTop;
-        const sectionBottom = sectionTop + section.offsetHeight;
-        if (scrollCenter >= sectionTop && scrollCenter < sectionBottom) {
-          setCurrentSection(index);
+      e.preventDefault();
+      lastWheelTime.current = now;
+
+      if (e.deltaY > 30) {
+        nextStep();
+      } else if (e.deltaY < -30) {
+        prevStep();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isTransitioning || isLoading) return;
+
+      const target = e.target as HTMLElement;
+      if (target.closest("input, textarea, select")) return;
+
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaY = touchStartY.current - touchEndY;
+
+      if (Math.abs(deltaY) > 60) {
+        if (deltaY > 0) {
+          nextStep();
+        } else {
+          prevStep();
         }
       }
-    });
-  }, []);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isTransitioning || isLoading) return;
+      if (e.key === "ArrowDown" || e.key === " ") {
+        e.preventDefault();
+        nextStep();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        prevStep();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: false });
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isTransitioning, isLoading, nextStep, prevStep]);
+
+  const getIdleHintMessage = useCallback(() => {
+    const step = scrollSteps[currentStep];
+    if (step.id === "hero") return "Swipez pour commencer";
+    if (step.id === "intro") return "Swipez pour découvrir mes projets";
+    if (step.id === "gallery-title") return null;
+    if (step.id.startsWith("project-")) return "Swipez pour le projet suivant";
+    if (step.id === "about") return "Swipez pour voir mes offres";
+    if (step.id.startsWith("offer-")) return null;
+    if (step.id === "contact-form") return "Swipez pour voir mes réseaux";
+    if (step.id === "contact-socials") return null;
+    return null;
+  }, [currentStep]);
 
   useEffect(() => {
-    const main = mainRef.current;
-    if (!main) return;
+    setIdleHint(null);
 
-    main.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => main.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+
+    idleTimerRef.current = setTimeout(() => {
+      const hint = getIdleHintMessage();
+      if (hint) setIdleHint(hint);
+    }, 3000);
+
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, [currentStep, getIdleHintMessage]);
 
   const scrollToSection = (index: number) => {
-    sectionRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const stepMap: { [key: number]: number } = {
+      0: 0,
+      1: 3,
+      2: 7,
+      3: 8,
+      4: 11,
+    };
+    goToStep(stepMap[index] || 0);
   };
 
   const goToNextSection = () => {
-    const nextSection = Math.min(currentSection + 1, sections.length - 1);
-    scrollToSection(nextSection);
+    nextStep();
   };
 
   const handleFadeOpacity = useCallback((opacity: number) => {
@@ -272,7 +354,11 @@ export default function Home() {
     if (prefilledType) {
       setFormData(prev => ({ ...prev, projectType: prefilledType }));
     }
-    sectionRefs.current[4]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    goToStep(11);
+  };
+
+  const scrollToSocials = () => {
+    goToStep(12);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -303,19 +389,14 @@ export default function Home() {
     setIsSubmitting(false);
   };
 
-  const currentRoom = useMemo(() => getCurrentRoom(scrollProgress), [scrollProgress]);
-  const showHeroContent = currentRoom === "hero";
-  const showAboutContent = currentRoom === "about" && scrollProgress < 0.66;
-  const showOffersContent = scrollProgress >= 0.66 && scrollProgress < 0.79;
-  const showContactContent = currentRoom === "contact";
-
-  const showImmersiveIntro = scrollProgress > 0.02 && scrollProgress < 0.10;
-
-  const activeOfferIndex = useMemo(() => {
-    if (!showOffersContent) return 0;
-    const offerProgress = (scrollProgress - 0.66) / (0.79 - 0.66);
-    return Math.min(2, Math.floor(offerProgress * 3));
-  }, [scrollProgress, showOffersContent]);
+  const currentStepData = scrollSteps[currentStep];
+  const showHeroContent = currentStepData.id === "hero";
+  const showImmersiveIntro = currentStepData.id === "intro";
+  const showGalleryTitle = currentStepData.id === "gallery-title";
+  const showAboutContent = currentStepData.id === "about";
+  const showOffersContent = currentStepData.id.startsWith("offer-");
+  const showContactForm = currentStepData.id === "contact-form";
+  const showContactSocials = currentStepData.id === "contact-socials";
 
   return (
     <>
@@ -336,7 +417,7 @@ export default function Home() {
       <div className="scroll-progress" style={{ transform: `scaleX(${scrollProgress})`, width: "100%" }} />
 
       <nav ref={navRef} className="nav" style={{ opacity: 0 }}>
-        <div className="nav-logo" data-cursor="Home">Cleanlystudio</div>
+        <div className="nav-logo" data-cursor="Home">CS</div>
         <div className="nav-links">
           <a href="#services" data-cursor="Work">Work</a>
           <a href="#about" data-cursor="About">About</a>
@@ -345,12 +426,12 @@ export default function Home() {
       </nav>
 
       <div className="section-indicator">
-        {sections.map((section, index) => (
+        {scrollSteps.map((step, index) => (
           <button
             key={index}
-            className={`indicator-dot ${currentSection === index ? "active" : ""}`}
-            onClick={() => scrollToSection(index)}
-            aria-label={section.label}
+            className={`indicator-dot ${currentStep === index ? "active" : ""} ${index < currentStep ? "passed" : ""}`}
+            onClick={() => goToStep(index)}
+            aria-label={step.label}
           >
             <span className="indicator-line" />
           </button>
@@ -432,12 +513,7 @@ export default function Home() {
       )}
 
       {showOffersContent && (
-        <div
-          className="offers-overlay"
-          onTouchStart={handleOfferTouchStart}
-          onTouchMove={handleOfferTouchMove}
-          onTouchEnd={handleOfferTouchEnd}
-        >
+        <div className="offers-overlay">
           <div className="offers-overlay-content">
             <AnimatedTitle isVisible={showOffersContent} className="offers-title" delay={0}>
               {"Mes Offres"}
@@ -445,16 +521,11 @@ export default function Home() {
             <AnimatedParagraph isVisible={showOffersContent} className="offers-subtitle" delay={0.2}>
               Des solutions adaptées à chaque projet et budget
             </AnimatedParagraph>
-            <div
-              className="offers-grid"
-              onTouchStart={handleOfferTouchStart}
-              onTouchMove={handleOfferTouchMove}
-              onTouchEnd={handleOfferTouchEnd}
-            >
+            <div className="offers-grid">
               {offers.map((offer, index) => (
                 <div
                   key={offer.id}
-                  className={`offer-card offer-${offer.id} ${index === currentOfferIndex ? "mobile-visible" : ""}`}
+                  className={`offer-card offer-${offer.id} ${index === mobileOfferIndex ? "mobile-visible" : ""}`}
                   data-visible={showOffersContent}
                   data-index={index}
                 >
@@ -475,30 +546,13 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div className="offers-nav-mobile">
-              <button
-                className="offers-nav-btn"
-                onClick={() => setCurrentOfferIndex(Math.max(0, currentOfferIndex - 1))}
-                disabled={currentOfferIndex === 0}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M15 18l-6-6 6-6"/>
-                </svg>
-              </button>
-              <div className="offers-progress-dots">
-                {offers.map((_, index) => (
-                  <div key={index} className={`offers-progress-dot ${index === currentOfferIndex ? "active" : ""} ${index < currentOfferIndex ? "passed" : ""}`} />
-                ))}
-              </div>
-              <button
-                className="offers-nav-btn"
-                onClick={() => setCurrentOfferIndex(Math.min(offers.length - 1, currentOfferIndex + 1))}
-                disabled={currentOfferIndex === offers.length - 1}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
-              </button>
+            <div className="offers-progress-dots">
+              {offers.map((_, index) => (
+                <div key={index} className={`offers-progress-dot ${index === mobileOfferIndex ? "active" : ""} ${index < mobileOfferIndex ? "passed" : ""}`} />
+              ))}
+            </div>
+            <div className="offers-swipe-hint">
+              <span>↓ Scrollez pour voir les offres ↓</span>
             </div>
             <p className="offers-footer">
               Hébergement inclus la première année. Pages supplémentaires, maintenance, options → sur devis.
@@ -507,13 +561,13 @@ export default function Home() {
         </div>
       )}
 
-      {showContactContent && (
+      {showContactForm && (
         <div className="contact-overlay">
           <div className="contact-overlay-content">
-            <AnimatedLabel isVisible={showContactContent} className="contact-status" delay={0}>
+            <AnimatedLabel isVisible={showContactForm} className="contact-status" delay={0}>
               ● Disponible pour projets
             </AnimatedLabel>
-            <AnimatedTitle isVisible={showContactContent} className="section-title contact-title" delay={0.2}>
+            <AnimatedTitle isVisible={showContactForm} className="section-title contact-title" delay={0.2}>
               {"Discutons de\nvotre vision"}
             </AnimatedTitle>
             {isSubmitted ? (
@@ -581,7 +635,7 @@ export default function Home() {
                     name="message"
                     placeholder=" "
                     className="form-textarea"
-                    rows={4}
+                    rows={3}
                     value={formData.message}
                     onChange={handleFormChange}
                     required
@@ -596,17 +650,37 @@ export default function Home() {
                 </MagneticButton>
               </form>
             )}
-            <div className="contact-divider">
-              <span>ou directement</span>
-            </div>
-            <a href="mailto:contact@cleanlystudio.fr" className="contact-email" data-cursor="Email">
+          </div>
+        </div>
+      )}
+
+      {showContactSocials && (
+        <div className="socials-overlay">
+          <div className="socials-overlay-content">
+            <AnimatedTitle isVisible={showContactSocials} className="socials-title" delay={0}>
+              {"Restons en contact"}
+            </AnimatedTitle>
+            <a href="mailto:contact@cleanlystudio.fr" className="socials-email" data-cursor="Email">
               contact@cleanlystudio.fr
             </a>
-            <div className="social-row">
-              <a href="https://github.com/kowta" target="_blank" rel="noopener noreferrer" data-cursor="GitHub">GitHub</a>
-              <a href="https://instagram.com/cleanlystudio" target="_blank" rel="noopener noreferrer" data-cursor="Instagram">Instagram</a>
-              <a href="https://linkedin.com/in/theo-houguet" target="_blank" rel="noopener noreferrer" data-cursor="LinkedIn">LinkedIn</a>
+            <div className="socials-links">
+              <a href="https://instagram.com/cleanlystudio" target="_blank" rel="noopener noreferrer" className="social-link" data-cursor="Instagram">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="2" y="2" width="20" height="20" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="18" cy="6" r="1.5" fill="currentColor" />
+                </svg>
+                <span>@cleanlystudio</span>
+              </a>
+              <a href="https://linkedin.com/in/theo-houguet" target="_blank" rel="noopener noreferrer" className="social-link" data-cursor="LinkedIn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="2" y="2" width="20" height="20" rx="3" />
+                  <path d="M7 11v6M7 7v.01M11 11v6M11 14c0-1.657 1.343-3 3-3s3 1.343 3 3v3" />
+                </svg>
+                <span>Théo Houguet</span>
+              </a>
             </div>
+            <p className="socials-footer">Normandie, France</p>
           </div>
         </div>
       )}
@@ -618,29 +692,23 @@ export default function Home() {
           style={{ minHeight: "80vh" }}
         >
           {showHeroContent && (
-            <div className="section-content hero-content">
-              <AnimatedLabel isVisible={showHeroContent && !isLoading} className="hero-label" delay={0.5}>
+            <div className="section-content hero-content" style={{ opacity: isLoading ? 0 : 1, transition: "opacity 0.5s ease" }}>
+              <AnimatedLabel isVisible={showHeroContent} className="hero-label" delay={isLoading ? 0.5 : 0}>
                 Creative Developer
               </AnimatedLabel>
               <div className="hero-title">
-                <AnimatedTitle isVisible={showHeroContent && !isLoading} className="hero-title-line" delay={0.7}>
+                <AnimatedTitle isVisible={showHeroContent} className="hero-title-line" delay={isLoading ? 0.7 : 0}>
                   {"Crafting"}
                 </AnimatedTitle>
-                <AnimatedTitle isVisible={showHeroContent && !isLoading} className="hero-title-line accent" delay={0.9}>
+                <AnimatedTitle isVisible={showHeroContent} className="hero-title-line accent" delay={isLoading ? 0.9 : 0}>
                   {"Digital"}
                 </AnimatedTitle>
-                <AnimatedTitle isVisible={showHeroContent && !isLoading} className="hero-title-line" delay={1.1}>
+                <AnimatedTitle isVisible={showHeroContent} className="hero-title-line" delay={isLoading ? 1.1 : 0}>
                   {"Experiences"}
                 </AnimatedTitle>
               </div>
-              <div className="hero-cta" style={{ opacity: showHeroContent && !isLoading ? 1 : 0, transition: "opacity 0.8s ease 1.5s" }}>
-                <button className="cta-primary" onClick={() => {
-                  const main = mainRef.current;
-                  if (main) {
-                    const targetScroll = main.scrollHeight * 0.14;
-                    main.scrollTo({ top: targetScroll, behavior: "smooth" });
-                  }
-                }}>
+              <div className="hero-cta" style={{ opacity: isLoading ? 0 : 1, transition: "opacity 0.8s ease 0.3s" }}>
+                <button className="cta-primary" onClick={() => goToStep(2)}>
                   <span>Voir mes projets</span>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M7 17L17 7M17 7H7M17 7v10"/>
@@ -683,19 +751,32 @@ export default function Home() {
         />
       </main>
 
-      <div className={`scroll-hint ${scrollProgress > 0.05 ? "hidden" : ""}`}>
+      <div className={`scroll-hint ${currentStep > 0 ? "hidden" : ""}`}>
         <div className="scroll-arrow">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12l7 7 7-7"/>
           </svg>
         </div>
-        <span className="scroll-hint-text">Swipe pour explorer</span>
+        <span className="scroll-hint-text">Explorer</span>
       </div>
 
+      {idleHint && currentStep > 0 && (
+        <div className={`idle-hint ${idleHint ? "visible" : ""}`}>
+          <div className="idle-hint-content">
+            <div className="idle-hint-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+              </svg>
+            </div>
+            <span className="idle-hint-text">{idleHint}</span>
+          </div>
+        </div>
+      )}
+
       <button
-        className={`next-button ${currentSection >= sections.length - 1 ? "hidden" : ""}`}
-        onClick={goToNextSection}
-        aria-label="Section suivante"
+        className={`next-button ${currentStep >= scrollSteps.length - 1 ? "hidden" : ""}`}
+        onClick={nextStep}
+        aria-label="Étape suivante"
       >
         <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 9l6 6 6-6"/>
