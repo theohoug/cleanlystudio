@@ -93,7 +93,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={inter.className}>{children}</body>
+      <head>
+        {/* Preload critical resources */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+      </head>
+      <body className={inter.className}>
+        {/* SSR Preload - LCP Element (visible immediately, hidden by JS) */}
+        <div id="ssr-preload" aria-hidden="true">
+          <div className="ssr-preload-content">
+            <h1 className="ssr-preload-title">CLEANLY<span>STUDIO</span></h1>
+            <p className="ssr-preload-tagline">Crafting Digital Experiences</p>
+          </div>
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

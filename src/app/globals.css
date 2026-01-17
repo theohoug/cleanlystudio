@@ -51,6 +51,49 @@ body {
   left: 0;
 }
 
+/* SSR Preload - Shows immediately for fast LCP */
+#ssr-preload {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #030303;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ssrFadeOut 0.3s ease 0.1s forwards;
+  pointer-events: none;
+}
+
+#ssr-preload .ssr-preload-content {
+  text-align: center;
+}
+
+#ssr-preload .ssr-preload-title {
+  font-size: clamp(28px, 6vw, 48px);
+  font-weight: 200;
+  letter-spacing: 0.12em;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+#ssr-preload .ssr-preload-title span {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#ssr-preload .ssr-preload-tagline {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+@keyframes ssrFadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 /* Smooth transitions for all elements */
 *, *::before, *::after {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
