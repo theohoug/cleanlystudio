@@ -18,7 +18,47 @@ const ImmersiveScene = dynamic(
 
 const LoadingScreen = dynamic(
   () => import("@/components/LoadingScreen"),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: '#030303',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            fontSize: 'clamp(28px, 6vw, 48px)',
+            fontWeight: 200,
+            letterSpacing: '0.12em',
+            color: '#fff',
+            marginBottom: '12px',
+          }}>
+            CLEANLY<span style={{ color: 'rgba(255,255,255,0.5)' }}>STUDIO</span>
+          </div>
+          <div style={{
+            width: '200px',
+            height: '2px',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '1px',
+            overflow: 'hidden',
+            margin: '0 auto',
+          }}>
+            <div style={{
+              width: '30%',
+              height: '100%',
+              background: '#fff',
+              animation: 'loadingPulse 1s ease-in-out infinite',
+            }} />
+          </div>
+        </div>
+      </div>
+    )
+  }
 );
 
 const CustomCursor = dynamic(
