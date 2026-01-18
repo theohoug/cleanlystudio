@@ -15,106 +15,48 @@ interface AnimatedTitleProps {
   isVisible: boolean;
 }
 
-const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
-
 export function AnimatedTitle({ children, className = "", delay = 0, isVisible }: AnimatedTitleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
-  const scrambleIntervals = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
     if (!containerRef.current || hasAnimated.current || !isVisible) return;
 
     const lines = containerRef.current.querySelectorAll(".line");
     const chars = containerRef.current.querySelectorAll(".char");
-    const charTexts = containerRef.current.querySelectorAll(".char-text");
-    const glows = containerRef.current.querySelectorAll(".char-glow");
 
     gsap.set(lines, { overflow: "visible", paddingRight: "0.15em", paddingLeft: "0.05em" });
-    gsap.set(chars, { y: "120%", opacity: 0, rotateX: -90, scale: 0.8 });
-    gsap.set(glows, { opacity: 0, scale: 0 });
+    gsap.set(chars, { y: "100%", opacity: 0 });
 
-    const tl = gsap.timeline({ delay });
-
-    // Main reveal animation
-    tl.to(chars, {
+    gsap.to(chars, {
       y: "0%",
       opacity: 1,
-      rotateX: 0,
-      scale: 1,
-      duration: 1.0,
-      stagger: 0.03,
-      ease: "power4.out",
-    });
-
-    // Text scramble effect
-    charTexts.forEach((charText, i) => {
-      const originalChar = charText.textContent || "";
-      if (originalChar === " ") return;
-
-      const startTime = delay * 1000 + i * 30;
-      const scrambleDuration = 400 + Math.random() * 200;
-      const scrambleCount = 6 + Math.floor(Math.random() * 4);
-
-      setTimeout(() => {
-        let count = 0;
-        const interval = setInterval(() => {
-          if (count < scrambleCount) {
-            charText.textContent = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-            count++;
-          } else {
-            charText.textContent = originalChar;
-            clearInterval(interval);
-          }
-        }, scrambleDuration / scrambleCount);
-        scrambleIntervals.current.push(interval);
-      }, startTime);
-    });
-
-    // Glow animation
-    tl.to(glows, {
-      opacity: 0.8,
-      scale: 1.2,
-      duration: 0.3,
+      duration: 0.8,
       stagger: 0.02,
-    }, "-=0.6")
-    .to(glows, {
-      opacity: 0,
-      scale: 1,
-      duration: 0.5,
-      stagger: 0.01,
+      ease: "power3.out",
+      delay,
       onComplete: () => {
         hasAnimated.current = true;
       }
-    }, "-=0.1");
+    });
 
   }, [delay, isVisible]);
 
   useEffect(() => {
     if (!isVisible && containerRef.current) {
       hasAnimated.current = false;
-      scrambleIntervals.current.forEach(clearInterval);
-      scrambleIntervals.current = [];
       const chars = containerRef.current.querySelectorAll(".char");
-      const glows = containerRef.current.querySelectorAll(".char-glow");
-      gsap.set(chars, { y: "120%", opacity: 0, rotateX: -90, scale: 0.8 });
-      gsap.set(glows, { opacity: 0, scale: 0 });
+      gsap.set(chars, { y: "100%", opacity: 0 });
     }
   }, [isVisible]);
-
-  useEffect(() => {
-    return () => {
-      scrambleIntervals.current.forEach(clearInterval);
-    };
-  }, []);
 
   const lines = children.split("\n");
 
   return (
-    <div ref={containerRef} className={className} style={{ perspective: "1000px" }}>
+    <div ref={containerRef} className={className}>
       {lines.map((line, lineIndex) => (
-        <div key={lineIndex} className="line" style={{ display: "block", overflow: "visible", paddingRight: "0.1em" }}>
-          <span style={{ display: "inline-block", transformStyle: "preserve-3d" }}>
+        <div key={lineIndex} className="line" style={{ display: "block", overflow: "hidden" }}>
+          <span style={{ display: "inline-block" }}>
             {line.split("").map((char, charIndex) => (
               <span
                 key={charIndex}
@@ -122,21 +64,9 @@ export function AnimatedTitle({ children, className = "", delay = 0, isVisible }
                 style={{
                   display: "inline-block",
                   whiteSpace: char === " " ? "pre" : "normal",
-                  position: "relative",
-                  transformStyle: "preserve-3d",
                 }}
               >
-                <span className="char-text">{char}</span>
-                <span
-                  className="char-glow"
-                  style={{
-                    position: "absolute",
-                    inset: "-15px",
-                    background: "radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%)",
-                    pointerEvents: "none",
-                    zIndex: -1,
-                  }}
-                />
+                {char}
               </span>
             ))}
           </span>
