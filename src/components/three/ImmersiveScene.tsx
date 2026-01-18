@@ -561,18 +561,38 @@ function Scene({
   const activeService = getActiveService(scrollProgress);
   const showGallery = currentRoom === "gallery";
 
-  // Lazy load other models after initial render (hero room already loaded)
+  // Track which rooms have been loaded
+  const [loadedRooms, setLoadedRooms] = useState<Set<string>>(new Set(["hero"]));
+
+  // Load rooms progressively based on scroll progress
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Preload other rooms in background
-      useGLTF.preload(ROOMS.gallery);
-      useGLTF.preload(ROOMS.about);
-      useGLTF.preload(ROOMS.contact);
-      // Preload gallery objects
+    const roomsToLoad = new Set(loadedRooms);
+
+    // Always load current room
+    roomsToLoad.add(currentRoom);
+
+    // Preload next room based on progress
+    if (scrollProgress > 0.05) roomsToLoad.add("gallery");
+    if (scrollProgress > 0.45) roomsToLoad.add("about");
+    if (scrollProgress > 0.70) roomsToLoad.add("contact");
+
+    if (roomsToLoad.size > loadedRooms.size) {
+      setLoadedRooms(roomsToLoad);
+      // Trigger preloads
+      roomsToLoad.forEach(room => {
+        if (!loadedRooms.has(room)) {
+          useGLTF.preload(ROOMS[room as keyof typeof ROOMS]);
+        }
+      });
+    }
+  }, [scrollProgress, currentRoom, loadedRooms]);
+
+  // Preload gallery objects only when approaching gallery
+  useEffect(() => {
+    if (scrollProgress > 0.08) {
       SERVICES.forEach(s => useGLTF.preload(s.object.path));
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [scrollProgress]);
 
   return (
     <>
@@ -582,12 +602,13 @@ function Scene({
       <Lights />
       <Environment preset="city" />
 
-      <Room path={ROOMS.hero} visible={currentRoom === "hero"} />
-      <Room path={ROOMS.gallery} visible={currentRoom === "gallery"} />
-      <Room path={ROOMS.about} visible={currentRoom === "about"} />
-      <Room path={ROOMS.contact} visible={currentRoom === "contact"} />
+      {/* Only mount rooms that have been loaded */}
+      {loadedRooms.has("hero") && <Room path={ROOMS.hero} visible={currentRoom === "hero"} />}
+      {loadedRooms.has("gallery") && <Room path={ROOMS.gallery} visible={currentRoom === "gallery"} />}
+      {loadedRooms.has("about") && <Room path={ROOMS.about} visible={currentRoom === "about"} />}
+      {loadedRooms.has("contact") && <Room path={ROOMS.contact} visible={currentRoom === "contact"} />}
 
-      <Gallery visible={showGallery} activeService={activeService} />
+      {showGallery && <Gallery visible={showGallery} activeService={activeService} />}
 
       <DustParticles visible={true} />
       <PostProcessing />

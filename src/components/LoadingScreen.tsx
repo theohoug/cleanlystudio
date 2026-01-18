@@ -15,7 +15,7 @@ interface LoadingScreenProps {
   onComplete: () => void;
 }
 
-const MIN_LOAD_TIME = 3000;
+const MIN_LOAD_TIME = 1500;
 
 function Loader3D({ progress }: { progress: number }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -340,14 +340,6 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
       {/* Footer */}
       <div className="loading-footer-premium">
-        <div className="footer-left">
-          <div className="sound-indicator">
-            <div className="sound-bars">
-              <span /><span /><span /><span />
-            </div>
-            <span className="sound-text">Son recommandé</span>
-          </div>
-        </div>
         <div className="footer-right">
           <span className="footer-year">© 2025</span>
         </div>

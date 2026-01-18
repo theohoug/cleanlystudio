@@ -486,7 +486,7 @@ export default function Home() {
 
       <MobileOverlay />
       <CustomCursor />
-      <SoundManager isLoaded={!isLoading} />
+      <SoundManager />
       <KonamiCode />
 
       {canMountCanvas && (

@@ -50,11 +50,3 @@ Quand Théo dit **"ship"** :
 - GSAP
 - Tailwind CSS
 
-## Easter Eggs
-
-- **Konami Code** : ↑↑↓↓←→←→BA
-- **7 clics sur "CS"** : Developer Mode
-- **Taper "awwwards"** : Awwwards Mode
-- **Taper "theo"** : Hello Théo
-- **Taper "matrix"** : Matrix Mode
-- **Taper "creative"** : Creativity Unlocked
