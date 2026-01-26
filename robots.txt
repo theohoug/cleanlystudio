@@ -1,0 +1,7 @@
+# Cleanlystudio - Robots.txt
+User-agent: *
+Allow: /
+Disallow: /_next/
+Disallow: /api/
+
+Sitemap: https://cleanlystudio.pro/sitemap.xml

@@ -1,0 +1,53 @@
+{
+  "name": "Cleanlystudio - Creative Developer",
+  "short_name": "Cleanly",
+  "description": "Développeur créatif - Sites web immersifs, applications et expériences 3D",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["portfolio", "business", "design"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Cleanlystudio Portfolio"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Contact",
+      "short_name": "Contact",
+      "url": "/#contact",
+      "description": "Me contacter"
+    },
+    {
+      "name": "Projets",
+      "short_name": "Work",
+      "url": "/#services",
+      "description": "Voir mes projets"
+    }
+  ]
+}
