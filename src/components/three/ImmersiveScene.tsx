@@ -80,9 +80,15 @@ export const SERVICES = [
   }
 ];
 
-// Progressive loading: Only preload hero room immediately for fast startup
-// Other models are loaded lazily as needed
+// Preload all rooms for smoother experience
+// Hero first, then others progressively
 useGLTF.preload(ROOMS.hero);
+useGLTF.preload(ROOMS.gallery);
+useGLTF.preload(ROOMS.about);
+useGLTF.preload(ROOMS.contact);
+
+// Preload gallery objects
+SERVICES.forEach(s => useGLTF.preload(s.object.path));
 
 // ============================================================
 // SCROLL RANGES - FIXED TIMING
@@ -206,49 +212,6 @@ function getCameraForProgress(progress: number): { pos: [number, number, number]
 // COMPONENTS
 // ============================================================
 
-// Skeleton placeholder while models load
-function SkeletonRoom() {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      {/* Floor grid */}
-      <gridHelper args={[10, 20, "#333", "#222"]} position={[0, 0, 0]} />
-
-      {/* Wireframe walls */}
-      <lineSegments position={[0, 1.5, -3]}>
-        <edgesGeometry args={[new THREE.BoxGeometry(8, 3, 0.1)]} />
-        <lineBasicMaterial color="#333" />
-      </lineSegments>
-
-      {/* Corner pillars */}
-      {[[-3, 0, -3], [3, 0, -3], [-3, 0, 3], [3, 0, 3]].map((pos, i) => (
-        <mesh key={i} position={pos as [number, number, number]}>
-          <boxGeometry args={[0.2, 3, 0.2]} />
-          <meshBasicMaterial color="#222" wireframe />
-        </mesh>
-      ))}
-
-      {/* Floating cubes */}
-      {[[-1, 1, 0], [1, 1.5, -1], [0, 0.8, 1]].map((pos, i) => (
-        <mesh key={i} position={pos as [number, number, number]}>
-          <boxGeometry args={[0.5, 0.5, 0.5]} />
-          <meshBasicMaterial color="#444" wireframe transparent opacity={0.5} />
-        </mesh>
-      ))}
-
-      {/* Ambient pulse */}
-      <pointLight position={[0, 2, 0]} intensity={0.5} color="#666" />
-    </group>
-  );
-}
-
 function Room({ path, visible }: { path: string; visible: boolean }) {
   const { scene } = useGLTF(path);
 
@@ -262,9 +225,8 @@ function Room({ path, visible }: { path: string; visible: boolean }) {
     return clone;
   }, [scene]);
 
-  if (!visible) return null;
-
-  return <primitive object={clonedScene} />;
+  // Always render but hide with visible prop to avoid suspense flash
+  return <primitive object={clonedScene} visible={visible} />;
 }
 
 function ServiceObject({
@@ -446,15 +408,13 @@ function ServiceObject({
 }
 
 function Gallery({ visible, activeService }: { visible: boolean; activeService: number | null }) {
-  if (!visible) return null;
-
   return (
-    <group>
+    <group visible={visible}>
       {SERVICES.map((service, index) => (
         <ServiceObject
           key={service.id}
           config={service}
-          isActive={activeService === index}
+          isActive={visible && activeService === index}
         />
       ))}
     </group>
@@ -561,39 +521,6 @@ function Scene({
   const activeService = getActiveService(scrollProgress);
   const showGallery = currentRoom === "gallery";
 
-  // Track which rooms have been loaded
-  const [loadedRooms, setLoadedRooms] = useState<Set<string>>(new Set(["hero"]));
-
-  // Load rooms progressively based on scroll progress
-  useEffect(() => {
-    const roomsToLoad = new Set(loadedRooms);
-
-    // Always load current room
-    roomsToLoad.add(currentRoom);
-
-    // Preload next room based on progress
-    if (scrollProgress > 0.05) roomsToLoad.add("gallery");
-    if (scrollProgress > 0.45) roomsToLoad.add("about");
-    if (scrollProgress > 0.70) roomsToLoad.add("contact");
-
-    if (roomsToLoad.size > loadedRooms.size) {
-      setLoadedRooms(roomsToLoad);
-      // Trigger preloads
-      roomsToLoad.forEach(room => {
-        if (!loadedRooms.has(room)) {
-          useGLTF.preload(ROOMS[room as keyof typeof ROOMS]);
-        }
-      });
-    }
-  }, [scrollProgress, currentRoom, loadedRooms]);
-
-  // Preload gallery objects only when approaching gallery
-  useEffect(() => {
-    if (scrollProgress > 0.08) {
-      SERVICES.forEach(s => useGLTF.preload(s.object.path));
-    }
-  }, [scrollProgress]);
-
   return (
     <>
       <color attach="background" args={["#050505"]} />
@@ -602,13 +529,12 @@ function Scene({
       <Lights />
       <Environment preset="city" />
 
-      {/* Only mount rooms that have been loaded */}
-      {loadedRooms.has("hero") && <Room path={ROOMS.hero} visible={currentRoom === "hero"} />}
-      {loadedRooms.has("gallery") && <Room path={ROOMS.gallery} visible={currentRoom === "gallery"} />}
-      {loadedRooms.has("about") && <Room path={ROOMS.about} visible={currentRoom === "about"} />}
-      {loadedRooms.has("contact") && <Room path={ROOMS.contact} visible={currentRoom === "contact"} />}
+      <Room path={ROOMS.hero} visible={currentRoom === "hero"} />
+      <Room path={ROOMS.gallery} visible={currentRoom === "gallery"} />
+      <Room path={ROOMS.about} visible={currentRoom === "about"} />
+      <Room path={ROOMS.contact} visible={currentRoom === "contact"} />
 
-      {showGallery && <Gallery visible={showGallery} activeService={activeService} />}
+      <Gallery visible={showGallery} activeService={activeService} />
 
       <DustParticles visible={true} />
       <PostProcessing />
@@ -661,7 +587,7 @@ export default function ImmersiveScene({ scrollProgress, onFadeOpacity }: Immers
         dpr={[1, 1.5]}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
-        <Suspense fallback={<SkeletonRoom />}>
+        <Suspense fallback={null}>
           <Scene scrollProgress={scrollProgress} mouse={mouse} />
         </Suspense>
       </Canvas>
