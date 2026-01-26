@@ -7,10 +7,11 @@
 
 import { useRef, useEffect, useState, Suspense, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, Environment, Float, Sparkles } from "@react-three/drei";
+import { Environment, Float, Sparkles } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 // ============================================================
 // CONFIGURATION
@@ -79,16 +80,6 @@ export const SERVICES = [
     ]
   }
 ];
-
-// Preload all rooms for smoother experience
-// Hero first, then others progressively
-useGLTF.preload(ROOMS.hero);
-useGLTF.preload(ROOMS.gallery);
-useGLTF.preload(ROOMS.about);
-useGLTF.preload(ROOMS.contact);
-
-// Preload gallery objects
-SERVICES.forEach(s => useGLTF.preload(s.object.path));
 
 // ============================================================
 // SCROLL RANGES - FIXED TIMING
@@ -212,21 +203,71 @@ function getCameraForProgress(progress: number): { pos: [number, number, number]
 // COMPONENTS
 // ============================================================
 
-function Room({ path, visible }: { path: string; visible: boolean }) {
-  const { scene } = useGLTF(path);
+// Cache to store loaded scenes globally - persists across renders
+const sceneCache = new Map<string, THREE.Group>();
+const loadingPromises = new Map<string, Promise<THREE.Group>>();
 
-  const clonedScene = useMemo(() => {
-    const clone = scene.clone(true);
-    clone.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        child.material = child.material.clone();
-      }
+// Preload function that returns a promise
+function preloadModel(path: string): Promise<THREE.Group> {
+  if (sceneCache.has(path)) {
+    return Promise.resolve(sceneCache.get(path)!);
+  }
+
+  if (loadingPromises.has(path)) {
+    return loadingPromises.get(path)!;
+  }
+
+  const promise = new Promise<THREE.Group>((resolve) => {
+    const loader = new GLTFLoader();
+    loader.load(path, (gltf) => {
+      const clone = gltf.scene.clone(true);
+      clone.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          child.material = child.material.clone();
+        }
+      });
+      sceneCache.set(path, clone);
+      loadingPromises.delete(path);
+      resolve(clone);
     });
-    return clone;
-  }, [scene]);
+  });
 
-  // Always render but hide with visible prop to avoid suspense flash
-  return <primitive object={clonedScene} visible={visible} />;
+  loadingPromises.set(path, promise);
+  return promise;
+}
+
+// All model paths
+const ALL_MODEL_PATHS = [
+  "/models/ModernLivingRoom.glb",
+  "/models/VRGallery.glb",
+  "/models/ModernOffice.glb",
+  "/models/CosyCoffee.glb",
+  "/models/gallery/cupcake.glb",
+  "/models/gallery/robot.glb",
+  "/models/gallery/saturn.glb",
+  "/models/gallery/campfire.glb",
+  "/models/gallery/trophy.glb",
+];
+
+// Fire off all preloads immediately (only on client)
+if (typeof window !== "undefined") {
+  ALL_MODEL_PATHS.forEach(preloadModel);
+}
+
+function Room({ path, visible }: { path: string; visible: boolean }) {
+  const [loadedScene, setLoadedScene] = useState<THREE.Group | null>(() => {
+    return sceneCache.get(path) || null;
+  });
+
+  useEffect(() => {
+    if (loadedScene) return;
+
+    preloadModel(path).then(setLoadedScene);
+  }, [path, loadedScene]);
+
+  if (!loadedScene) return null;
+
+  return <primitive object={loadedScene} visible={visible} />;
 }
 
 function ServiceObject({
@@ -236,14 +277,22 @@ function ServiceObject({
   config: typeof SERVICES[0];
   isActive: boolean;
 }) {
-  const { scene } = useGLTF(config.object.path);
+  const [loadedScene, setLoadedScene] = useState<THREE.Group | null>(() => {
+    return sceneCache.get(config.object.path) || null;
+  });
   const groupRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
+  useEffect(() => {
+    if (loadedScene) return;
+    preloadModel(config.object.path).then(setLoadedScene);
+  }, [config.object.path, loadedScene]);
+
   const clonedScene = useMemo(() => {
-    const clone = scene.clone(true);
+    if (!loadedScene) return null;
+    const clone = loadedScene.clone(true);
     clone.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
         child.material = child.material.clone();
@@ -253,18 +302,17 @@ function ServiceObject({
       }
     });
     return clone;
-  }, [scene]);
+  }, [loadedScene]);
 
-  const { offsetY } = useMemo(() => {
+  const offsetY = useMemo(() => {
+    if (!clonedScene) return 0;
     const box = new THREE.Box3().setFromObject(clonedScene);
     const center = new THREE.Vector3();
     const size = new THREE.Vector3();
     box.getCenter(center);
     box.getSize(size);
     const scale = config.object.scale;
-    return {
-      offsetY: (-center.y + size.y / 2) * scale,
-    };
+    return (-center.y + size.y / 2) * scale;
   }, [clonedScene, config.object.scale]);
 
   useFrame((state, delta) => {
@@ -376,18 +424,20 @@ function ServiceObject({
       )}
 
       {/* Object with Float */}
-      <Float
-        speed={2}
-        rotationIntensity={0}
-        floatIntensity={isActive ? 0.3 : 0.15}
-        floatingRange={[-0.05, 0.05]}
-      >
-        <group position={[0, pedestalHeight + offsetY, 0]}>
-          <group ref={groupRef} scale={config.object.scale}>
-            <primitive object={clonedScene} />
+      {clonedScene && (
+        <Float
+          speed={2}
+          rotationIntensity={0}
+          floatIntensity={isActive ? 0.3 : 0.15}
+          floatingRange={[-0.05, 0.05]}
+        >
+          <group position={[0, pedestalHeight + offsetY, 0]}>
+            <group ref={groupRef} scale={config.object.scale}>
+              <primitive object={clonedScene} />
+            </group>
           </group>
-        </group>
-      </Float>
+        </Float>
+      )}
 
       {/* Invisible hitbox for hover */}
       <mesh

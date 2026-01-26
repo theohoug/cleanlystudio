@@ -6,7 +6,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import { useProgress, useGLTF } from "@react-three/drei";
+import { useProgress } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { gsap } from "gsap";
 import * as THREE from "three";
@@ -16,28 +16,6 @@ interface LoadingScreenProps {
 }
 
 const MIN_LOAD_TIME = 1500;
-
-// All models to preload - must match ImmersiveScene
-const MODELS_TO_PRELOAD = [
-  "/models/ModernLivingRoom.glb",
-  "/models/VRGallery.glb",
-  "/models/ModernOffice.glb",
-  "/models/CosyCoffee.glb",
-  "/models/gallery/cupcake.glb",
-  "/models/gallery/robot.glb",
-  "/models/gallery/saturn.glb",
-  "/models/gallery/campfire.glb",
-  "/models/gallery/trophy.glb",
-];
-
-// Invisible component that forces all GLB to load
-function PreloadAllModels() {
-  // This triggers useGLTF for each model, which useProgress will track
-  MODELS_TO_PRELOAD.forEach(path => {
-    useGLTF(path);
-  });
-  return null;
-}
 
 function Loader3D({ progress }: { progress: number }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -291,8 +269,6 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
         <Canvas camera={{ position: [0, 0, 4], fov: 45 }}>
           <Suspense fallback={null}>
             <Loader3D progress={progress} />
-            {/* Preload all scene models during loading screen */}
-            <PreloadAllModels />
           </Suspense>
         </Canvas>
       </div>
