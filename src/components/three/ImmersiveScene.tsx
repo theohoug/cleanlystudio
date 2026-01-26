@@ -563,9 +563,11 @@ function PostProcessing() {
 function Scene({
   scrollProgress,
   mouse,
+  allModelsLoaded,
 }: {
   scrollProgress: number;
   mouse: { x: number; y: number };
+  allModelsLoaded: boolean;
 }) {
   const currentRoom = getCurrentRoom(scrollProgress);
   const activeService = getActiveService(scrollProgress);
@@ -579,12 +581,16 @@ function Scene({
       <Lights />
       <Environment preset="city" />
 
-      <Room path={ROOMS.hero} visible={currentRoom === "hero"} />
-      <Room path={ROOMS.gallery} visible={currentRoom === "gallery"} />
-      <Room path={ROOMS.about} visible={currentRoom === "about"} />
-      <Room path={ROOMS.contact} visible={currentRoom === "contact"} />
-
-      <Gallery visible={showGallery} activeService={activeService} />
+      {/* Only render rooms after all models are loaded */}
+      {allModelsLoaded && (
+        <>
+          <Room path={ROOMS.hero} visible={currentRoom === "hero"} />
+          <Room path={ROOMS.gallery} visible={currentRoom === "gallery"} />
+          <Room path={ROOMS.about} visible={currentRoom === "about"} />
+          <Room path={ROOMS.contact} visible={currentRoom === "contact"} />
+          <Gallery visible={showGallery} activeService={activeService} />
+        </>
+      )}
 
       <DustParticles visible={true} />
       <PostProcessing />
@@ -603,7 +609,15 @@ interface ImmersiveSceneProps {
 
 export default function ImmersiveScene({ scrollProgress, onFadeOpacity }: ImmersiveSceneProps) {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [allModelsLoaded, setAllModelsLoaded] = useState(false);
   const lastRoomRef = useRef<string | null>(null);
+
+  // Wait for all models to be loaded
+  useEffect(() => {
+    Promise.all(ALL_MODEL_PATHS.map(preloadModel)).then(() => {
+      setAllModelsLoaded(true);
+    });
+  }, []);
 
   useEffect(() => {
     const opacity = getFadeOpacity(scrollProgress);
@@ -638,7 +652,7 @@ export default function ImmersiveScene({ scrollProgress, onFadeOpacity }: Immers
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
         <Suspense fallback={null}>
-          <Scene scrollProgress={scrollProgress} mouse={mouse} />
+          <Scene scrollProgress={scrollProgress} mouse={mouse} allModelsLoaded={allModelsLoaded} />
         </Suspense>
       </Canvas>
     </div>
