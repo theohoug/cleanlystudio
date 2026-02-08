@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="CLEANLY Studio - Expériences digitales immersives">
+    <meta name="description" content="CLEANLY - Studio digital haut de gamme & Organisation esport">
     <meta name="theme-color" content="#030308">
     
-    <title>CLEANLY Studio — Void Experience</title>
+    <title>CLEANLY — Studio & Events</title>
     
     <!-- Preload critical assets -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,8 +34,8 @@
             
             <!-- Texte de chargement -->
             <div class="loader-text">
-                <span class="loader-title">CLEANLY STUDIO</span>
-                <span class="loader-status">INITIALIZING VOID</span>
+                <span class="loader-title">CLEANLY</span>
+                <span class="loader-status">CHOOSE YOUR PATH</span>
             </div>
             
             <!-- Barre de progression -->
@@ -75,11 +75,102 @@
     </main>
 
     <!-- ============================================
+         SPLIT HERO SCREEN
+         ============================================ -->
+    <div id="split-container" class="split-container">
+        <!-- Cote Studio -->
+        <div class="split-side split-studio" id="splitStudio" data-side="studio">
+            <div class="split-content">
+                <span class="split-label">PILIER A</span>
+                <h2 class="split-title">CLEANLY<br><span class="split-title-accent studio">STUDIO</span></h2>
+                <p class="split-tagline">Sites Web Haut de Gamme &middot; Exp&eacute;riences 3D &middot; Design</p>
+                <div class="split-services">
+                    <span class="split-tag">WEB</span>
+                    <span class="split-tag">3D</span>
+                    <span class="split-tag">DESIGN</span>
+                    <span class="split-tag">MOTION</span>
+                </div>
+                <button class="split-cta studio-cta" data-cursor="EXPLORER">
+                    <span class="cta-text">EXPLORER LE STUDIO</span>
+                    <span class="cta-arrow">&rarr;</span>
+                </button>
+                <span class="split-meta">B2B &middot; MARQUES &middot; LABELS</span>
+            </div>
+        </div>
+
+        <!-- Divider central -->
+        <div class="split-divider" id="splitDivider">
+            <div class="divider-line"></div>
+            <span class="divider-symbol">&#9672;</span>
+            <div class="divider-line"></div>
+        </div>
+
+        <!-- Cote Events -->
+        <div class="split-side split-events" id="splitEvents" data-side="events">
+            <div class="split-content">
+                <span class="split-label">PILIER B</span>
+                <h2 class="split-title">CLEANLY<br><span class="split-title-accent events">EVENTS</span></h2>
+                <p class="split-tagline">Tournois Esport &middot; Sponsoring &middot; Talents</p>
+                <div class="split-services">
+                    <span class="split-tag">NAGACUP</span>
+                    <span class="split-tag">SPONSORING</span>
+                    <span class="split-tag">TALENTS</span>
+                </div>
+                <button class="split-cta events-cta" data-cursor="DECOUVRIR">
+                    <span class="cta-text">D&Eacute;COUVRIR LES EVENTS</span>
+                    <span class="cta-arrow">&rarr;</span>
+                </button>
+                <span class="split-meta">JOUEURS &middot; STREAMERS &middot; PARTENAIRES</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         EVENTS CONTENT (hidden by default)
+         ============================================ -->
+    <div id="events-content" class="events-content hidden">
+        <nav class="events-nav">
+            <button class="back-to-split" id="backFromEvents">
+                <span>&larr;</span>
+                <span>RETOUR</span>
+            </button>
+            <span class="events-nav-title">CLEANLY EVENTS</span>
+        </nav>
+
+        <section class="events-hero-section">
+            <h1 class="events-main-title">L'ESPORT<br>COMME INVESTISSEMENT</h1>
+            <p class="events-subtitle">Organisation de tournois, sponsoring de talents,<br>financement de l'&eacute;cosyst&egrave;me gaming.</p>
+        </section>
+
+        <section class="events-projects">
+            <div class="event-card">
+                <span class="event-status">EN COURS</span>
+                <h3 class="event-name">NAGACUP</h3>
+                <p class="event-desc">Organisation de tournois esport comp&eacute;titifs. Structure et logistique &eacute;v&eacute;nementielle gaming.</p>
+            </div>
+            <div class="event-card">
+                <span class="event-status">PARTENAIRE</span>
+                <h3 class="event-name">GUILLGAMES</h3>
+                <p class="event-desc">Sponsoring et accompagnement de cr&eacute;ateurs de contenu gaming.</p>
+            </div>
+            <div class="event-card">
+                <span class="event-status">BIENT&Ocirc;T</span>
+                <h3 class="event-name">TALENT FUNDING</h3>
+                <p class="event-desc">Programme de financement de talents esport &eacute;mergents.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================
          UI OVERLAY (par-dessus la 3D)
          ============================================ -->
     <div id="ui-overlay" class="ui-overlay">
         <!-- Navigation -->
         <nav id="nav" class="nav">
+            <button class="nav-back-to-split" id="backToSplit">
+                <span>&larr;</span>
+                <span>CLEANLY</span>
+            </button>
             <div class="nav-logo">
                 <span class="nav-symbol">◈</span>
                 <span class="nav-text">CLEANLY</span>

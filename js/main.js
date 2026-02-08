@@ -17,6 +17,7 @@ import ZoneManager from './zones/ZoneManager.js';
 
 import Cursor from './ui/Cursor.js';
 import HUD from './ui/HUD.js';
+import SplitController from './ui/SplitController.js';
 
 import DeviceDetect from './utils/DeviceDetect.js';
 import EventBus from './utils/EventBus.js';
@@ -30,10 +31,11 @@ class App {
         this.isReady = false;
         this.isPlaying = false;
         this.currentZone = 0;
-        
+        this.currentMode = 'split'; // 'split' | 'studio' | 'events'
+
         // Performance tier (will be set by DeviceDetect)
         this.performanceTier = 'high'; // 'high', 'medium', 'low'
-        
+
         // Module references
         this.engine = null;
         this.camera = null;
@@ -45,6 +47,7 @@ class App {
         this.zoneManager = null;
         this.cursor = null;
         this.hud = null;
+        this.splitController = null;
         
         // DOM Elements
         this.dom = {
@@ -59,7 +62,13 @@ class App {
             uiOverlay: document.getElementById('ui-overlay'),
             scrollIndicator: document.getElementById('scrollIndicator'),
             navZones: document.querySelectorAll('.nav-zone'),
-            audioToggle: document.getElementById('audioToggle')
+            audioToggle: document.getElementById('audioToggle'),
+            splitContainer: document.getElementById('split-container'),
+            splitStudio: document.getElementById('splitStudio'),
+            splitEvents: document.getElementById('splitEvents'),
+            eventsContent: document.getElementById('events-content'),
+            backFromEvents: document.getElementById('backFromEvents'),
+            backToSplit: document.getElementById('backToSplit')
         };
         
         // Bind methods
@@ -99,14 +108,17 @@ class App {
         
         // Step 7: Initialize zones
         this.initZones();
-        
+
         // Step 8: Initialize UI
         this.initUI();
-        
-        // Step 9: Bind events
+
+        // Step 9: Initialize split controller
+        this.initSplit();
+
+        // Step 10: Bind events
         this.bindEvents();
-        
-        // Step 10: Hide loader & start
+
+        // Step 11: Hide loader & start
         this.start();
     }
     
@@ -303,6 +315,37 @@ class App {
     }
     
     /* =========================================
+       SPLIT CONTROLLER
+       ========================================= */
+    initSplit() {
+        this.updateLoadStatus('PREPARING SPLIT');
+
+        this.splitController = new SplitController({
+            engine: this.engine,
+            camera: this.camera,
+            particles: this.particles,
+            lights: this.lights,
+            postProcessing: this.postProcessing,
+            events: this.events,
+            dom: this.dom,
+            performanceTier: this.performanceTier,
+            zoneManager: this.zoneManager
+        });
+
+        // Listen for mode changes
+        this.events.on('mode:studio', () => {
+            this.currentMode = 'studio';
+        });
+
+        this.events.on('mode:split', () => {
+            this.currentMode = 'split';
+            this.currentZone = 0;
+        });
+
+        this.updateLoadStatus('SPLIT READY');
+    }
+
+    /* =========================================
        EVENT BINDINGS
        ========================================= */
     bindEvents() {
@@ -362,9 +405,10 @@ class App {
     }
     
     handleSwipe(startY, endY) {
+        if (this.currentMode !== 'studio') return;
         const threshold = 50;
         const diff = startY - endY;
-        
+
         if (Math.abs(diff) > threshold) {
             if (diff > 0) {
                 // Swipe up - next zone
@@ -382,22 +426,24 @@ class App {
     start() {
         this.updateLoadStatus('ENTERING VOID');
         this.updateLoadProgress(100);
-        
+
         // Delay before hiding loader
         setTimeout(() => {
             // Hide loader
             this.dom.loader.classList.add('hidden');
-            
-            // Show UI
-            this.dom.uiOverlay.classList.add('visible');
-            
+
             // Start render loop
             this.isReady = true;
             this.isPlaying = true;
             this.update();
-            
-            console.log('%c◈ VOID EXPERIENCE READY', 'font-size: 14px; font-weight: bold; color: #4a9eff;');
-            
+
+            // Play split reveal (NOT the UI overlay — that shows after Studio is selected)
+            if (this.splitController) {
+                this.splitController.playRevealTimeline();
+            }
+
+            console.log('%c◈ CLEANLY READY — CHOOSE YOUR PATH', 'font-size: 14px; font-weight: bold; color: #4a9eff;');
+
         }, 800);
     }
     
@@ -433,6 +479,7 @@ class App {
        NAVIGATION
        ========================================= */
     goToZone(index) {
+        if (this.currentMode !== 'studio') return;
         if (index === this.currentZone) return;
         if (index < 0 || index > 4) return;
         
@@ -492,6 +539,7 @@ class App {
     }
     
     onKeyDown(e) {
+        if (this.currentMode !== 'studio') return;
         switch (e.key) {
             case 'ArrowDown':
             case 'PageDown':

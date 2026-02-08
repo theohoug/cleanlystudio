@@ -28,7 +28,13 @@ class Particles {
         this.ambientData = null;
         this.glowData = null;
         this.sparkleData = null;
-        
+
+        // Color bias system for split hover
+        this.colorBias = null; // null | 'studio' | 'events'
+        this.targetColors = null;
+        this.targetGlowColors = null;
+        this.colorLerpSpeed = 0.02;
+
         this.init();
     }
     
@@ -415,65 +421,145 @@ class Particles {
     }
     
     /* =========================================
+       COLOR BIAS — Shift particle colors on hover
+       ========================================= */
+    setColorBias(side) {
+        this.colorBias = side;
+
+        const palettes = {
+            studio: [
+                new THREE.Color(0x4a9eff),
+                new THREE.Color(0x7ab8ff),
+                new THREE.Color(0x4affff),
+                new THREE.Color(0xffffff),
+            ],
+            events: [
+                new THREE.Color(0xff4a6a),
+                new THREE.Color(0xff7a94),
+                new THREE.Color(0xff9e4a),
+                new THREE.Color(0xffffff),
+            ],
+            neutral: [
+                new THREE.Color(0x4a9eff),
+                new THREE.Color(0x7ab8ff),
+                new THREE.Color(0x9e4aff),
+                new THREE.Color(0xc490ff),
+                new THREE.Color(0x4affff),
+                new THREE.Color(0xffffff),
+            ]
+        };
+
+        const palette = palettes[side] || palettes.neutral;
+
+        // Generate target colors for ambient particles
+        if (this.ambientParticles) {
+            const count = this.ambientParticles.geometry.attributes.color.array.length / 3;
+            this.targetColors = new Float32Array(count * 3);
+            for (let i = 0; i < count; i++) {
+                const color = palette[Math.floor(Math.random() * palette.length)];
+                this.targetColors[i * 3] = color.r;
+                this.targetColors[i * 3 + 1] = color.g;
+                this.targetColors[i * 3 + 2] = color.b;
+            }
+        }
+
+        // Generate target colors for glow orbs
+        if (this.glowOrbs) {
+            const glowPalette = side === 'studio'
+                ? [new THREE.Color(0x4a9eff), new THREE.Color(0x4affff)]
+                : side === 'events'
+                ? [new THREE.Color(0xff4a6a), new THREE.Color(0xff9e4a)]
+                : [new THREE.Color(0x4a9eff), new THREE.Color(0x9e4aff), new THREE.Color(0x4affff)];
+
+            const glowCount = this.glowOrbs.geometry.attributes.color.array.length / 3;
+            this.targetGlowColors = new Float32Array(glowCount * 3);
+            for (let i = 0; i < glowCount; i++) {
+                const color = glowPalette[Math.floor(Math.random() * glowPalette.length)];
+                this.targetGlowColors[i * 3] = color.r;
+                this.targetGlowColors[i * 3 + 1] = color.g;
+                this.targetGlowColors[i * 3 + 2] = color.b;
+            }
+        }
+    }
+
+    /* =========================================
        UPDATE
        ========================================= */
     update(delta, elapsed) {
         // Update ambient particles - organic floating
         if (this.ambientParticles && this.ambientData) {
             const positions = this.ambientParticles.geometry.attributes.position.array;
-            
+
             for (let i = 0; i < positions.length / 3; i++) {
                 const i3 = i * 3;
                 const speed = this.ambientData.speeds[i];
                 const amp = this.ambientData.amplitudes[i];
-                
-                positions[i3] = this.ambientData.basePositions[i3] + 
+
+                positions[i3] = this.ambientData.basePositions[i3] +
                     Math.sin(elapsed * speed + this.ambientData.phases[i3]) * amp;
-                positions[i3 + 1] = this.ambientData.basePositions[i3 + 1] + 
+                positions[i3 + 1] = this.ambientData.basePositions[i3 + 1] +
                     Math.cos(elapsed * speed * 0.8 + this.ambientData.phases[i3 + 1]) * amp * 0.7;
-                positions[i3 + 2] = this.ambientData.basePositions[i3 + 2] + 
+                positions[i3 + 2] = this.ambientData.basePositions[i3 + 2] +
                     Math.sin(elapsed * speed * 0.6 + this.ambientData.phases[i3 + 2]) * amp * 0.4;
             }
-            
+
             this.ambientParticles.geometry.attributes.position.needsUpdate = true;
             this.ambientParticles.material.uniforms.uTime.value = elapsed;
+
+            // Color lerp towards target colors
+            if (this.targetColors) {
+                const colors = this.ambientParticles.geometry.attributes.color.array;
+                for (let i = 0; i < colors.length; i++) {
+                    colors[i] += (this.targetColors[i] - colors[i]) * this.colorLerpSpeed;
+                }
+                this.ambientParticles.geometry.attributes.color.needsUpdate = true;
+            }
         }
-        
+
         // Update glow orbs - slow orbiting
         if (this.glowOrbs && this.glowData) {
             const positions = this.glowOrbs.geometry.attributes.position.array;
-            
+
             for (let i = 0; i < positions.length / 3; i++) {
                 const i3 = i * 3;
                 const speed = this.glowData.orbitSpeeds[i];
                 const radius = this.glowData.orbitRadii[i];
                 const phase = this.glowData.phases[i];
                 const vertOffset = this.glowData.verticalOffsets[i];
-                
+
                 const angle = phase + elapsed * speed;
                 positions[i3] = Math.cos(angle) * radius;
                 positions[i3 + 2] = Math.sin(angle) * radius - 80;
-                positions[i3 + 1] = this.glowData.basePositions[i3 + 1] + 
+                positions[i3 + 1] = this.glowData.basePositions[i3 + 1] +
                     Math.sin(elapsed * 0.3 + vertOffset) * 8;
             }
-            
+
             this.glowOrbs.geometry.attributes.position.needsUpdate = true;
             this.glowOrbs.material.uniforms.uTime.value = elapsed;
+
+            // Color lerp for glow orbs
+            if (this.targetGlowColors) {
+                const colors = this.glowOrbs.geometry.attributes.color.array;
+                for (let i = 0; i < colors.length; i++) {
+                    colors[i] += (this.targetGlowColors[i] - colors[i]) * this.colorLerpSpeed;
+                }
+                this.glowOrbs.geometry.attributes.color.needsUpdate = true;
+            }
         }
-        
+
         // Update sparkles - twinkling
         if (this.sparkles && this.sparkleData) {
             const sizes = this.sparkles.geometry.attributes.size.array;
-            
+
             for (let i = 0; i < sizes.length; i++) {
                 const phase = this.sparkleData.twinklePhases[i];
                 const speed = this.sparkleData.twinkleSpeeds[i];
                 const baseSize = this.sparkleData.baseSizes[i];
-                
+
                 const twinkle = Math.sin(elapsed * speed + phase) * 0.5 + 0.5;
                 sizes[i] = baseSize * (0.3 + twinkle * 0.7);
             }
-            
+
             this.sparkles.geometry.attributes.size.needsUpdate = true;
         }
     }

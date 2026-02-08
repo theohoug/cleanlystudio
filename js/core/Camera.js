@@ -121,6 +121,41 @@ class Camera {
     }
     
     /* =========================================
+       DRIFT TO SIDE (Split hover effect)
+       ========================================= */
+    driftToSide(side) {
+        const targetX = side === 'studio' ? -3 : side === 'events' ? 3 : 0;
+
+        if (window.gsap) {
+            gsap.to(this.camera.position, {
+                x: targetX,
+                duration: 1.2,
+                ease: 'power2.out'
+            });
+        } else {
+            this.camera.position.x = targetX;
+        }
+    }
+
+    /* =========================================
+       RESET POSITION (Back to zone 0)
+       ========================================= */
+    resetPosition() {
+        const pos = this.zonePositions[0];
+        if (window.gsap) {
+            gsap.to(this.camera.position, {
+                x: pos.x,
+                y: pos.y,
+                z: pos.z,
+                duration: 1.5,
+                ease: 'power2.inOut'
+            });
+        } else {
+            this.camera.position.set(pos.x, pos.y, pos.z);
+        }
+    }
+
+    /* =========================================
        RESIZE
        ========================================= */
     resize() {

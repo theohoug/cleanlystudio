@@ -103,6 +103,40 @@ class Lights {
     }
     
     /* =========================================
+       SET HOVER LIGHTING (Split screen)
+       ========================================= */
+    setHoverLighting(side) {
+        const configs = {
+            studio:  { color1: 0x4a9eff, color2: 0x4affff, intensity: 1.2 },
+            events:  { color1: 0xff4a6a, color2: 0xff9e4a, intensity: 1.2 },
+            neutral: { color1: 0x4a9eff, color2: 0x9e4aff, intensity: 1.0 }
+        };
+
+        const config = configs[side] || configs.neutral;
+
+        if (this.accentLights.length >= 2 && window.gsap) {
+            const c1 = new THREE.Color(config.color1);
+            const c2 = new THREE.Color(config.color2);
+
+            gsap.to(this.accentLights[0].color, {
+                r: c1.r, g: c1.g, b: c1.b,
+                duration: 0.8,
+                ease: 'power2.out'
+            });
+            gsap.to(this.accentLights[1].color, {
+                r: c2.r, g: c2.g, b: c2.b,
+                duration: 0.8,
+                ease: 'power2.out'
+            });
+            gsap.to(this.accentLights[0], {
+                intensity: config.intensity,
+                duration: 0.8,
+                ease: 'power2.out'
+            });
+        }
+    }
+
+    /* =========================================
        SET ZONE LIGHTING
        ========================================= */
     setZoneLighting(zoneIndex) {
