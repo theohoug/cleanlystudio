@@ -1,0 +1,312 @@
+/**
+ * @file showcase/page.tsx
+ * @description Brand Sheet — Stealth C Identity Showcase
+ * @author Cleanlystudio
+ */
+
+'use client'
+
+import { useState, useCallback, useEffect } from 'react'
+
+const P = 'M 155,50 L 65,50 L 30,100 L 65,150 L 155,150 L 130,130 L 75,130 L 55,100 L 75,70 L 130,70 Z'
+
+const DL_ICON = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'
+
+export default function ShowcasePage() {
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    const body = document.body
+    const html = document.documentElement
+    const prev = {
+      bodyPos: body.style.position,
+      bodyOvf: body.style.overflow,
+      bodyH: body.style.height,
+      bodyW: body.style.width,
+      bodyBg: body.style.background,
+      htmlOvf: html.style.overflow,
+      htmlH: html.style.height,
+    }
+    body.style.position = 'static'
+    body.style.overflow = 'auto'
+    body.style.height = 'auto'
+    body.style.width = '100%'
+    body.style.background = '#f5f5f5'
+    html.style.overflow = 'auto'
+    html.style.height = 'auto'
+
+    const ssrPreload = document.getElementById('ssr-preload')
+    if (ssrPreload) ssrPreload.style.display = 'none'
+
+    return () => {
+      body.style.position = prev.bodyPos
+      body.style.overflow = prev.bodyOvf
+      body.style.height = prev.bodyH
+      body.style.width = prev.bodyW
+      body.style.background = prev.bodyBg
+      html.style.overflow = prev.htmlOvf
+      html.style.height = prev.htmlH
+      if (ssrPreload) ssrPreload.style.display = ''
+    }
+  }, [])
+
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(null), 2000)
+  }, [])
+
+  const dlPNG = useCallback((type: string, fill: string, bg: string, size: number) => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const bgRect = `<rect width="100%" height="100%" fill="${bg}"/>`
+    let svgStr = ''
+    let fname = ''
+
+    if (type === 'icon') {
+      canvas.width = size; canvas.height = size
+      svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="${size}" height="${size}">${bgRect}<path d="${P}" fill="${fill}"/></svg>`
+      fname = `cleanly-icon-${fill === '#000' ? 'black' : 'white'}-${bg.replace('#', '')}-${size}px.png`
+    } else if (type === 'lockup-h') {
+      const w = size; const h = Math.round(size * 120 / 520)
+      canvas.width = w; canvas.height = h
+      svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" width="${w}" height="${h}">${bgRect}<g transform="translate(10,10) scale(0.5)"><path d="${P}" fill="${fill}"/></g><text x="120" y="56" font-family="Helvetica Neue,Arial,sans-serif" font-weight="700" font-size="32" fill="${fill}" letter-spacing="10">CLEANLY</text><text x="120" y="82" font-family="Helvetica Neue,Arial,sans-serif" font-weight="300" font-size="13" fill="${fill}" letter-spacing="14">STUDIO</text></svg>`
+      fname = `cleanly-lockup-h-${fill === '#000' ? 'black' : 'white'}-${bg.replace('#', '')}-${w}px.png`
+    } else if (type === 'lockup-v') {
+      const w = size; const h = Math.round(size * 280 / 240)
+      canvas.width = w; canvas.height = h
+      svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" width="${w}" height="${h}">${bgRect}<svg x="62" y="45" width="116" height="93" viewBox="30 50 125 100"><path d="${P}" fill="${fill}"/></svg><text x="120" y="180" font-family="Helvetica Neue,Arial,sans-serif" font-weight="700" font-size="22" fill="${fill}" letter-spacing="7" text-anchor="middle">CLEANLY</text><text x="120" y="203" font-family="Helvetica Neue,Arial,sans-serif" font-weight="300" font-size="9" fill="${fill}" letter-spacing="9" text-anchor="middle">STUDIO</text></svg>`
+      fname = `cleanly-lockup-v-${fill === '#000' ? 'black' : 'white'}-${bg.replace('#', '')}-${w}px.png`
+    }
+
+    const img = new Image()
+    const blob = new Blob([svgStr], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    img.onload = () => {
+      ctx.fillStyle = bg
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0)
+      URL.revokeObjectURL(url)
+      const a = document.createElement('a')
+      a.download = fname
+      a.href = canvas.toDataURL('image/png')
+      a.click()
+      showToast(`PNG ${size}px telecharge`)
+    }
+    img.src = url
+  }, [showToast])
+
+  return (
+    <>
+      <style>{`
+        .sc-sheet, .sc-sheet * { cursor: auto !important; }
+        .sc-sheet { max-width: 1400px; margin: 0 auto; background: #fff; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+        .sc-hero { background: #000; padding: 64px 40px; display: flex; align-items: center; justify-content: center; gap: 32px; }
+        .sc-hero svg { width: 88px; height: 88px; flex-shrink: 0; }
+        .sc-hero-text h1 { font-size: 42px; font-weight: 700; color: #fff; letter-spacing: 12px; text-transform: uppercase; margin: 0; }
+        .sc-hero-text p { font-size: 14px; font-weight: 300; color: #fff; letter-spacing: 14px; text-transform: uppercase; margin-top: 4px; }
+        .sc-section { padding: 48px 48px; border-bottom: 1px solid #eee; }
+        .sc-section-label { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: #bbb; margin-bottom: 28px; font-weight: 500; }
+        .sc-dl-btn { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 8px; border: none; background: rgba(0,0,0,0.06); cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s, background 0.2s, transform 0.15s; z-index: 2; }
+        .sc-dl-btn svg { width: 16px; height: 16px; }
+        .sc-dl-btn:hover { background: rgba(0,0,0,0.12); transform: scale(1.1); }
+        .sc-dl-btn:active { transform: scale(0.95); }
+        *:hover > .sc-dl-btn { opacity: 1; }
+        .sc-dark .sc-dl-btn, .sc-accent .sc-dl-btn { background: rgba(255,255,255,0.08); }
+        .sc-dark .sc-dl-btn:hover, .sc-accent .sc-dl-btn:hover { background: rgba(255,255,255,0.16); }
+        .sc-dark .sc-dl-btn svg path, .sc-dark .sc-dl-btn svg polyline, .sc-dark .sc-dl-btn svg line,
+        .sc-accent .sc-dl-btn svg path, .sc-accent .sc-dl-btn svg polyline, .sc-accent .sc-dl-btn svg line { stroke: #fff; }
+        .sc-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111; color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 13px; font-weight: 500; letter-spacing: 1px; z-index: 200; opacity: 0; transition: all 0.3s cubic-bezier(0.16,1,0.3,1); pointer-events: none; }
+        .sc-toast.sc-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .sc-icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .sc-icon-cell { aspect-ratio: 1; border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 32px; position: relative; overflow: hidden; }
+        .sc-icon-cell svg.sc-logo { width: 100%; height: 100%; }
+        .sc-icon-cell.sc-light { background: #fff; border: 1px solid #e8e8e8; }
+        .sc-icon-cell.sc-dark { background: #0a0a0a; }
+        .sc-icon-cell.sc-gray { background: #f0f0f0; }
+        .sc-icon-cell.sc-accent { background: #1a1a2e; }
+        .sc-cell-label { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 8px; letter-spacing: 2px; color: #bbb; text-transform: uppercase; }
+        .sc-icon-cell.sc-dark .sc-cell-label, .sc-icon-cell.sc-accent .sc-cell-label { color: #555; }
+        .sc-lockup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .sc-lockup-cell { border-radius: 16px; padding: 40px 48px; display: flex; align-items: center; gap: 20px; position: relative; overflow: hidden; }
+        .sc-lockup-cell.sc-light { background: #fff; border: 1px solid #e8e8e8; }
+        .sc-lockup-cell.sc-dark { background: #0a0a0a; }
+        .sc-lockup-cell svg.sc-mark { width: 48px; height: 48px; flex-shrink: 0; }
+        .sc-lockup-cell .sc-text h2 { font-size: 24px; font-weight: 700; letter-spacing: 10px; line-height: 1; margin: 0; }
+        .sc-lockup-cell .sc-text p { font-size: 10px; font-weight: 300; letter-spacing: 12px; margin-top: 3px; }
+        .sc-lockup-cell.sc-light .sc-text h2, .sc-lockup-cell.sc-light .sc-text p { color: #000; }
+        .sc-lockup-cell.sc-dark .sc-text h2, .sc-lockup-cell.sc-dark .sc-text p { color: #fff; }
+        .sc-stacked-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+        .sc-stacked-cell { border-radius: 16px; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; position: relative; overflow: hidden; }
+        .sc-stacked-cell.sc-light { background: #fff; border: 1px solid #e8e8e8; }
+        .sc-stacked-cell.sc-dark { background: #0a0a0a; }
+        .sc-stacked-cell.sc-gray { background: #f0f0f0; }
+        .sc-stacked-cell svg.sc-mark { width: 64px; height: 64px; }
+        .sc-stacked-cell .sc-text { text-align: center; }
+        .sc-stacked-cell .sc-text h2 { font-size: 18px; font-weight: 700; letter-spacing: 7px; line-height: 1; margin: 0; }
+        .sc-stacked-cell .sc-text p { font-size: 8px; font-weight: 300; letter-spacing: 8px; margin-top: 3px; }
+        .sc-stacked-cell.sc-light .sc-text h2, .sc-stacked-cell.sc-light .sc-text p { color: #000; }
+        .sc-stacked-cell.sc-dark .sc-text h2, .sc-stacked-cell.sc-dark .sc-text p { color: #fff; }
+        .sc-stacked-cell.sc-gray .sc-text h2, .sc-stacked-cell.sc-gray .sc-text p { color: #000; }
+        .sc-sizing { display: flex; align-items: flex-end; gap: 28px; justify-content: center; padding: 32px 0; flex-wrap: wrap; }
+        .sc-sizing .sc-size { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .sc-sizing .sc-size span { font-size: 9px; letter-spacing: 2px; color: #bbb; }
+        .sc-footer { background: #000; padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; }
+        .sc-footer span { font-size: 10px; letter-spacing: 4px; color: #444; text-transform: uppercase; }
+        @media (max-width: 1024px) {
+          .sc-icon-grid { grid-template-columns: repeat(2, 1fr); }
+          .sc-stacked-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+          .sc-hero { flex-direction: column; text-align: center; padding: 48px 24px; gap: 20px; }
+          .sc-hero svg { width: 64px; height: 64px; }
+          .sc-hero-text h1 { font-size: 28px; letter-spacing: 8px; }
+          .sc-hero-text p { font-size: 11px; letter-spacing: 10px; }
+          .sc-section { padding: 32px 20px; }
+          .sc-section-label { font-size: 9px; margin-bottom: 20px; }
+          .sc-icon-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .sc-icon-cell { padding: 24px; border-radius: 12px; }
+          .sc-lockup-row { grid-template-columns: 1fr; gap: 12px; }
+          .sc-lockup-cell { padding: 28px 24px; gap: 16px; border-radius: 12px; }
+          .sc-lockup-cell svg.sc-mark { width: 36px; height: 36px; }
+          .sc-lockup-cell .sc-text h2 { font-size: 20px; letter-spacing: 6px; }
+          .sc-lockup-cell .sc-text p { font-size: 9px; letter-spacing: 8px; }
+          .sc-stacked-row { grid-template-columns: 1fr 1fr; gap: 12px; }
+          .sc-stacked-cell { padding: 28px 16px; border-radius: 12px; gap: 12px; }
+          .sc-stacked-cell svg.sc-mark { width: 48px; height: 48px; }
+          .sc-stacked-cell .sc-text h2 { font-size: 14px; letter-spacing: 5px; }
+          .sc-sizing { gap: 16px; }
+          .sc-footer { padding: 24px 20px; flex-direction: column; gap: 8px; text-align: center; }
+          .sc-dl-btn { opacity: 0.7; width: 28px; height: 28px; top: 8px; right: 8px; }
+          .sc-dl-btn svg { width: 14px; height: 14px; }
+        }
+        @media (max-width: 480px) {
+          .sc-icon-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .sc-icon-cell { padding: 20px; }
+          .sc-stacked-row { grid-template-columns: 1fr; }
+          .sc-hero-text h1 { font-size: 24px; letter-spacing: 6px; }
+        }
+      `}</style>
+
+      <div className="sc-sheet">
+        {/* Hero */}
+        <div className="sc-hero">
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d={P} fill="#fff" />
+          </svg>
+          <div className="sc-hero-text">
+            <h1>CLEANLY</h1>
+            <p>STUDIO</p>
+          </div>
+        </div>
+
+        {/* 01 — Icon Mark */}
+        <div className="sc-section">
+          <div className="sc-section-label">01 — Icon Mark</div>
+          <div className="sc-icon-grid">
+            <div className="sc-icon-cell sc-light">
+              <button className="sc-dl-btn" onClick={() => dlPNG('icon', '#000', '#ffffff', 1024)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-logo" viewBox="0 0 200 200" fill="none"><path d={P} fill="#000" /></svg>
+              <span className="sc-cell-label">Noir / Blanc</span>
+            </div>
+            <div className="sc-icon-cell sc-dark">
+              <button className="sc-dl-btn" onClick={() => dlPNG('icon', '#fff', '#0a0a0a', 1024)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-logo" viewBox="0 0 200 200" fill="none"><path d={P} fill="#fff" /></svg>
+              <span className="sc-cell-label">Blanc / Noir</span>
+            </div>
+            <div className="sc-icon-cell sc-gray">
+              <button className="sc-dl-btn" onClick={() => dlPNG('icon', '#000', '#f0f0f0', 1024)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-logo" viewBox="0 0 200 200" fill="none"><path d={P} fill="#000" /></svg>
+              <span className="sc-cell-label">Noir / Gris</span>
+            </div>
+            <div className="sc-icon-cell sc-accent">
+              <button className="sc-dl-btn" onClick={() => dlPNG('icon', '#fff', '#1a1a2e', 1024)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-logo" viewBox="0 0 200 200" fill="none"><path d={P} fill="#fff" /></svg>
+              <span className="sc-cell-label">Blanc / Navy</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 02 — Lockup Horizontal */}
+        <div className="sc-section">
+          <div className="sc-section-label">02 — Lockup Horizontal</div>
+          <div className="sc-lockup-row">
+            <div className="sc-lockup-cell sc-light">
+              <button className="sc-dl-btn" onClick={() => dlPNG('lockup-h', '#000', '#ffffff', 4096)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-mark" viewBox="0 0 200 200" fill="none"><path d={P} fill="#000" /></svg>
+              <div className="sc-text"><h2>CLEANLY</h2><p>STUDIO</p></div>
+            </div>
+            <div className="sc-lockup-cell sc-dark">
+              <button className="sc-dl-btn" onClick={() => dlPNG('lockup-h', '#fff', '#0a0a0a', 4096)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-mark" viewBox="0 0 200 200" fill="none"><path d={P} fill="#fff" /></svg>
+              <div className="sc-text"><h2>CLEANLY</h2><p>STUDIO</p></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 03 — Lockup Vertical */}
+        <div className="sc-section">
+          <div className="sc-section-label">03 — Lockup Vertical</div>
+          <div className="sc-stacked-row">
+            <div className="sc-stacked-cell sc-light">
+              <button className="sc-dl-btn" onClick={() => dlPNG('lockup-v', '#000', '#ffffff', 2048)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-mark" viewBox="0 0 200 200" fill="none"><path d={P} fill="#000" /></svg>
+              <div className="sc-text"><h2>CLEANLY</h2><p>STUDIO</p></div>
+            </div>
+            <div className="sc-stacked-cell sc-dark">
+              <button className="sc-dl-btn" onClick={() => dlPNG('lockup-v', '#fff', '#0a0a0a', 2048)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-mark" viewBox="0 0 200 200" fill="none"><path d={P} fill="#fff" /></svg>
+              <div className="sc-text"><h2>CLEANLY</h2><p>STUDIO</p></div>
+            </div>
+            <div className="sc-stacked-cell sc-gray">
+              <button className="sc-dl-btn" onClick={() => dlPNG('lockup-v', '#000', '#f0f0f0', 2048)} title="Download PNG">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: DL_ICON }} />
+              </button>
+              <svg className="sc-mark" viewBox="0 0 200 200" fill="none"><path d={P} fill="#000" /></svg>
+              <div className="sc-text"><h2>CLEANLY</h2><p>STUDIO</p></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 04 — Tailles */}
+        <div className="sc-section">
+          <div className="sc-section-label">04 — Tailles</div>
+          <div className="sc-sizing">
+            {[16, 24, 32, 48, 64, 96, 128].map((s) => (
+              <div key={s} className="sc-size">
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" width={s} height={s}><path d={P} fill="#000" /></svg>
+                <span>{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sc-footer">
+          <span>Cleanly Studio — Web Digital & Esport</span>
+          <span>Stealth C — Brand Identity</span>
+          <span>2026</span>
+        </div>
+      </div>
+
+      <div className={`sc-toast${toastMsg ? ' sc-show' : ''}`}>{toastMsg}</div>
+    </>
+  )
+}
