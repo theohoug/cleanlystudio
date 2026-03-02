@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /_next/static/
+Disallow: /_next/image/
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://cleanlystudio.pro/sitemap.xml
